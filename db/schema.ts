@@ -96,3 +96,34 @@ export const attachments = sqliteTable('attachments', {
   version: integer('version').notNull().default(1),
   syncStatus: text('sync_status').notNull().default('LOCAL'),
 });
+
+// --- Focus Sessions ---
+export const focusSessions = sqliteTable('focus_sessions', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').references(() => tasks.id, { onDelete: 'set null' }),
+  type: text('type').notNull(), // 'focus' | 'short_break' | 'long_break'
+  plannedSeconds: integer('planned_seconds').notNull(),
+  actualSeconds: integer('actual_seconds').notNull().default(0),
+  status: text('status').notNull(), // 'completed' | 'interrupted' | 'cancelled'
+  startedAt: integer('started_at', { mode: 'timestamp' }),
+  endedAt: integer('ended_at', { mode: 'timestamp' }),
+  
+  // Cloud Sync Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+  version: integer('version').notNull().default(1),
+  syncStatus: text('sync_status').notNull().default('LOCAL'),
+});
+
+// --- Notifications ---
+export const notifications = sqliteTable('notifications', {
+  id: text('id').primaryKey(), // maps to expo-notifications identifier
+  type: text('type').notNull(), // 'task_reminder'|'focus_complete'|'break_complete'|'daily_plan'|'daily_review'|'weekly_summary'
+  taskId: text('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
+  scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
+  triggeredAt: integer('triggered_at', { mode: 'timestamp' }),
+  status: text('status').notNull().default('scheduled'), // 'scheduled'|'triggered'|'cancelled'
+  payload: text('payload'), // JSON: { title, body, data }
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+});

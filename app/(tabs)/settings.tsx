@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, Switch, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Switch, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useAuthStore } from '../../store/authStore';
-import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import { NotificationSettingsSection } from '../../components/settings/NotificationSettingsSection';
 export default function Settings() {
   const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
@@ -85,6 +85,14 @@ export default function Settings() {
           </View>
 
           </View>
+      </View>
+
+      {/* Notifications Section */}
+      <View className="mt-6 mb-2 px-5">
+        <Text className="text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase text-xs tracking-wider">
+          Notifications
+        </Text>
+        <NotificationSettingsSection />
       </View>
 
       {/* Danger Zone */}

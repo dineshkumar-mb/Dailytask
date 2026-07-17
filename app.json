@@ -39,7 +39,17 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#7c3aed",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "%(count)s DailyTask notifications"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

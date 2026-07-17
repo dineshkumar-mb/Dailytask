@@ -10,6 +10,10 @@ import migrations from '../drizzle/migrations';
 import { db } from '../db/client';
 import { useTaskStore } from '../store/taskStore';
 import { View, Text, Platform } from 'react-native';
+import { NotificationService, setNotificationHandler } from '../services/NotificationService';
+
+// Register notification handler at module level (must be outside any component)
+setNotificationHandler();
 
 // Custom hook to protect routes
 function useProtectedRoute() {
@@ -81,18 +85,54 @@ const Initializer = Platform.OS === 'web' ? WebInitializer : NativeInitializer;
 
 export default function RootLayout() {
   useProtectedRoute();
+  const router = useRouter();
   
   const theme = useSettingsStore((state) => state.theme);
+  const notificationPrefs = useSettingsStore((state) => state.notifications);
   const { colorScheme, setColorScheme } = useColorScheme();
 
   // Sync NativeWind with our Zustand store
   useEffect(() => {
     try {
       setColorScheme(theme);
-    } catch (e) {
-      // Ignored: NativeWind occasionally throws on web depending on config cache
-    }
+    } catch (e) {}
   }, [theme]);
+
+  // Bootstrap: request notification permissions and wire tap listener
+  useEffect(() => {
+    NotificationService.requestPermissions();
+
+    const unsubscribe = NotificationService.addTapListener(
+      (taskId) => router.push(`/task/${taskId}` as any),
+      () => router.push('/(tabs)' as any)
+    );
+
+    return () => { unsubscribe?.(); };
+  }, []);
+
+  // Sync daily reminders when settings change
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (notificationPrefs.morningPlannerEnabled) {
+      NotificationService.scheduleMorningPlanner(
+        notificationPrefs.morningPlannerHour,
+        notificationPrefs.morningPlannerMinute
+      );
+    } else {
+      NotificationService.cancelMorningPlanner();
+    }
+    if (notificationPrefs.eveningReviewEnabled) {
+      NotificationService.scheduleEveningReview(
+        notificationPrefs.eveningReviewHour,
+        notificationPrefs.eveningReviewMinute
+      );
+    } else {
+      NotificationService.cancelEveningReview();
+    }
+  }, [
+    notificationPrefs.morningPlannerEnabled, notificationPrefs.morningPlannerHour, notificationPrefs.morningPlannerMinute,
+    notificationPrefs.eveningReviewEnabled, notificationPrefs.eveningReviewHour, notificationPrefs.eveningReviewMinute,
+  ]);
 
   const isDark = colorScheme === 'dark';
 
@@ -117,6 +157,7 @@ export default function RootLayout() {
           <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
           <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
           <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
+          <Stack.Screen name="focus/[id]" options={{ headerShown: false }} />
         </Stack>
       </GestureHandlerRootView>
     </Initializer>

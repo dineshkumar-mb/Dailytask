@@ -23,16 +23,16 @@ export default function EditTask() {
 
   if (!taskToEdit) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-gray-500">Task not found!</Text>
+      <View className="flex-1 justify-center items-center bg-gray-50 dark:bg-gray-900">
+        <Text className="text-gray-500 dark:text-gray-400">Task not found!</Text>
         <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 p-5">
-      <Text className="text-2xl font-bold text-gray-900 mb-6">Edit Task</Text>
+    <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-900 p-5">
+      <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Task</Text>
       <TaskForm 
         defaultValues={{
           title: taskToEdit.title,

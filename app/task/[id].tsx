@@ -10,19 +10,19 @@ export default function TaskDetails() {
 
   if (!task) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-5">
-        <Text className="text-gray-500">Task not found!</Text>
+      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900 p-5">
+        <Text className="text-gray-500 dark:text-gray-400">Task not found!</Text>
         <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50 p-5">
-      <Text className="text-3xl font-bold text-gray-900 mb-2">
+    <View className="flex-1 bg-gray-50 dark:bg-gray-900 p-5">
+      <Text className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
         {task.title}
       </Text>
-      <Text className="text-gray-500 mb-6">
+      <Text className="text-gray-500 dark:text-gray-400 mb-6">
         Category: {task.category} • Priority: {task.priority}
       </Text>
       

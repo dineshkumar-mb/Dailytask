@@ -14,8 +14,8 @@ export default function AddTask() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 p-5">
-      <Text className="text-2xl font-bold text-gray-900 mb-6">Create New Task</Text>
+    <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-900 p-5">
+      <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create New Task</Text>
       <TaskForm onSubmit={onSubmit} submitLabel="Save Task" />
     </ScrollView>
   );

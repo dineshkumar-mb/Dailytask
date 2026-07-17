@@ -54,13 +54,13 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
           activeOpacity={0.8} 
           className="mb-3"
         >
-          <Card className={`flex-row items-center p-4 ${task.isCompleted ? 'opacity-60' : 'opacity-100'}`}>
+          <Card className={`flex-row items-center p-4 bg-white dark:bg-gray-800 ${task.isCompleted ? 'opacity-60' : 'opacity-100'} border ${task.isCompleted ? 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50' : 'border-gray-100 dark:border-gray-700'}`}>
             
             {/* Checkbox */}
             <TouchableOpacity 
               onPress={handleToggle}
               className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center
-                ${task.isCompleted ? 'border-blue-500 bg-blue-500' : 'border-gray-300 bg-transparent'}`}
+                ${task.isCompleted ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600 bg-transparent'}`}
             >
               {task.isCompleted && <Text className="text-white text-xs font-bold">✓</Text>}
             </TouchableOpacity>
@@ -68,12 +68,12 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
             {/* Task Details */}
             <View className="flex-1">
               <Text 
-                className={`text-base font-semibold text-gray-900 ${task.isCompleted ? 'line-through text-gray-500' : ''}`}
+                className={`text-base font-semibold text-gray-900 dark:text-white ${task.isCompleted ? 'line-through text-gray-500 dark:text-gray-500' : ''}`}
                 numberOfLines={1}
               >
                 {task.title}
               </Text>
-              <Text className="text-xs text-gray-500 mt-1">{task.category}</Text>
+              <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">{task.category}</Text>
             </View>
 
             {/* Priority Badge */}

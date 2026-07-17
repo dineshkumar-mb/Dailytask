@@ -50,7 +50,7 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
       />
 
       {/* Category Selection */}
-      <Text className="text-gray-700 text-sm font-semibold mb-2 mt-4">Category</Text>
+      <Text className="text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2 mt-4">Category</Text>
       <Controller
         control={control}
         name="category"
@@ -61,10 +61,10 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
                 key={cat}
                 onPress={() => onChange(cat)}
                 className={`px-4 py-2 rounded-full border ${
-                  value === cat ? 'bg-blue-500 border-blue-500' : 'bg-white border-gray-300'
+                  value === cat ? 'bg-blue-500 border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700'
                 }`}
               >
-                <Text className={`${value === cat ? 'text-white' : 'text-gray-700'} font-medium`}>
+                <Text className={`${value === cat ? 'text-white' : 'text-gray-700 dark:text-gray-300'} font-medium`}>
                   {cat}
                 </Text>
               </TouchableOpacity>
@@ -74,7 +74,7 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
       />
 
       {/* Priority Selection */}
-      <Text className="text-gray-700 text-sm font-semibold mb-2 mt-2">Priority</Text>
+      <Text className="text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2 mt-2">Priority</Text>
       <Controller
         control={control}
         name="priority"
@@ -85,10 +85,10 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
                 key={pri}
                 onPress={() => onChange(pri)}
                 className={`flex-1 items-center py-3 rounded-xl border ${
-                  value === pri ? 'bg-gray-800 border-gray-800' : 'bg-white border-gray-300'
+                  value === pri ? 'bg-gray-800 dark:bg-gray-700 border-gray-800 dark:border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700'
                 }`}
               >
-                <Text className={`${value === pri ? 'text-white' : 'text-gray-700'} font-bold`}>
+                <Text className={`${value === pri ? 'text-white' : 'text-gray-700 dark:text-gray-300'} font-bold`}>
                   {pri}
                 </Text>
               </TouchableOpacity>

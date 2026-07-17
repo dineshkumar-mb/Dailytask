@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, Switch, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
+import { useAuthStore } from '../store/authStore';
 
 export default function Settings() {
   const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
+  const logout = useAuthStore((state) => state.logout);
 
   const handleClearData = () => {
     Alert.alert('Clear Data', 'Are you sure you want to delete all tasks? This cannot be undone.', [
@@ -21,21 +23,35 @@ export default function Settings() {
     ]);
   };
 
+  const handleLogout = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Log Out', 
+        style: 'destructive', 
+        onPress: () => {
+          logout();
+          // The router guard in _layout.tsx will automatically redirect to /login
+        } 
+      }
+    ]);
+  };
+
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-900">
       
       {/* Preferences Section */}
       <View className="mt-6 mb-8 px-5">
-        <Text className="text-gray-500 font-semibold mb-2 uppercase text-xs tracking-wider">
+        <Text className="text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase text-xs tracking-wider">
           Preferences
         </Text>
         
-        <View className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <View className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
           
-          <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
+          <View className="flex-row items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
             <View>
-              <Text className="text-base font-medium text-gray-900">Dark Mode</Text>
-              <Text className="text-sm text-gray-500 mt-1">Currently using {theme}</Text>
+              <Text className="text-base font-medium text-gray-900 dark:text-white">Dark Mode</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">Currently using {theme}</Text>
             </View>
             <Switch 
               value={theme === 'dark'} 
@@ -46,8 +62,8 @@ export default function Settings() {
 
           <View className="flex-row items-center justify-between p-4">
             <View>
-              <Text className="text-base font-medium text-gray-900">Push Notifications</Text>
-              <Text className="text-sm text-gray-500 mt-1">Daily task reminders</Text>
+              <Text className="text-base font-medium text-gray-900 dark:text-white">Push Notifications</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">Daily task reminders</Text>
             </View>
             <Switch 
               value={notificationsEnabled} 
@@ -65,7 +81,14 @@ export default function Settings() {
           Danger Zone
         </Text>
         
-        <View className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <View className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <TouchableOpacity 
+            onPress={handleLogout}
+            className="flex-row items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700"
+          >
+            <Text className="text-base font-medium text-red-500">Log Out</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity 
             onPress={handleClearData}
             className="flex-row items-center justify-between p-4"

@@ -103,7 +103,7 @@ export default function RootLayout() {
     NotificationService.requestPermissions();
 
     const unsubscribe = NotificationService.addTapListener(
-      (taskId) => router.push(`/task/${taskId}` as any),
+      (taskId: string) => router.push(`/task/${taskId}` as any),
       () => router.push('/(tabs)' as any)
     );
 

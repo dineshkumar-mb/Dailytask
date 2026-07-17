@@ -3,11 +3,32 @@ import { View, Text, Switch, ScrollView, TouchableOpacity, Alert } from 'react-n
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
 import { useAuthStore } from '../store/authStore';
+import type * as NotificationsType from 'expo-notifications';
 
+let Notifications: typeof NotificationsType | null = null;
+try {
+  Notifications = require('expo-notifications');
+} catch (e) {
+  // Ignored
+}
 export default function Settings() {
   const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
   const logout = useAuthStore((state) => state.logout);
+
+  const scheduleTestNotification = async () => {
+    if (Notifications) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Test Notification",
+          body: "This is a local push notification test!",
+        },
+        trigger: null, // Send immediately
+      });
+    } else {
+      Alert.alert('Not Supported', 'Push notifications are not supported in this environment (e.g. Expo Go on Android).');
+    }
+  };
 
   const handleClearData = () => {
     Alert.alert('Clear Data', 'Are you sure you want to delete all tasks? This cannot be undone.', [
@@ -71,6 +92,17 @@ export default function Settings() {
               trackColor={{ true: '#3b82f6' }}
             />
           </View>
+
+          <TouchableOpacity 
+            onPress={scheduleTestNotification}
+            className="flex-row items-center justify-between p-4 border-t border-gray-100 dark:border-gray-700"
+          >
+            <View>
+              <Text className="text-base font-medium text-gray-900 dark:text-white">Test Notification</Text>
+              <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">Send a local push notification</Text>
+            </View>
+            <Text className="text-blue-500 font-medium">Send</Text>
+          </TouchableOpacity>
 
         </View>
       </View>

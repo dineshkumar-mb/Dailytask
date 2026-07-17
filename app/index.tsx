@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { router } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/ui/Button';
 import { TaskCard } from '../components/task/TaskCard';
@@ -89,7 +88,7 @@ export default function Home() {
 
       {/* List */}
       <View className="flex-1">
-        <FlashList
+        <FlatList
           data={displayedTasks}
           keyExtractor={(item: any) => item.id}
           renderItem={({ item }: any) => (
@@ -100,7 +99,6 @@ export default function Home() {
               onDelete={() => useTaskStore.getState().deleteTask(item.id)}
             />
           )}
-          {...({ estimatedItemSize: 76 } as any)}
         />
       </View>
 

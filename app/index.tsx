@@ -1,28 +1,35 @@
-import { View, Text, Button } from 'react-native';
+import { View, Text } from 'react-native';
 import { router } from 'expo-router';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 export default function Home() {
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-5">
-      <Text className="text-3xl font-bold text-gray-900 mb-8">
-        Your Daily Tasks
-      </Text>
+    <View className="flex-1 justify-center bg-gray-50 p-5">
       
-      <View className="w-full my-3">
-        <Button 
-          title="Add a Task" 
-          onPress={() => router.push('/add' as any)} 
-          color="#3b82f6"
-        />
-      </View>
+      <Card className="items-center p-8">
+        <Text className="text-3xl font-bold text-gray-900 mb-2">
+          Daily Tasks
+        </Text>
+        <Text className="text-gray-500 mb-8 text-center">
+          Master your day, one task at a time.
+        </Text>
+        
+        <View className="w-full gap-4">
+          <Button 
+            title="Add a Task" 
+            onPress={() => router.push('/add' as any)} 
+            variant="primary"
+          />
 
-      <View className="w-full my-3">
-        <Button 
-          title="Settings" 
-          onPress={() => router.push('/settings' as any)} 
-          color="#64748b"
-        />
-      </View>
+          <Button 
+            title="Settings" 
+            onPress={() => router.push('/settings' as any)} 
+            variant="secondary"
+          />
+        </View>
+      </Card>
+
     </View>
   );
 }

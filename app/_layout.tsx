@@ -13,6 +13,10 @@ export default function RootLayout() {
         options={{ title: 'Add New Task', presentation: 'modal' }} 
       />
       <Stack.Screen 
+        name="task/[id]" 
+        options={{ title: 'Task Details' }} 
+      />
+      <Stack.Screen 
         name="settings" 
         options={{ title: 'Settings' }} 
       />

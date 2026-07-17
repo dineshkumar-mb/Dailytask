@@ -1,20 +1,43 @@
-import { View, Text, Button } from 'react-native';
+import { View, Text } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { useTaskStore } from '../../store/taskStore';
+import { Button } from '../../components/ui/Button';
 
 export default function TaskDetails() {
   const { id } = useLocalSearchParams();
+  const tasks = useTaskStore((state) => state.tasks);
+  const task = tasks.find((t) => t.id === id);
+
+  if (!task) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 p-5">
+        <Text className="text-gray-500">Task not found!</Text>
+        <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
+      </View>
+    );
+  }
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-5">
-      <Text className="text-2xl font-bold text-gray-900 mb-4">
-        Task Details for ID: {id}
+    <View className="flex-1 bg-gray-50 p-5">
+      <Text className="text-3xl font-bold text-gray-900 mb-2">
+        {task.title}
+      </Text>
+      <Text className="text-gray-500 mb-6">
+        Category: {task.category} • Priority: {task.priority}
       </Text>
       
-      <Button 
-        title="Go Back" 
-        onPress={() => router.back()} 
-        color="#64748b"
-      />
+      <View className="gap-4">
+        <Button 
+          title="Edit Task" 
+          onPress={() => router.push(`/edit/${task.id}` as any)} 
+          variant="primary"
+        />
+        <Button 
+          title="Go Back" 
+          onPress={() => router.back()} 
+          variant="secondary"
+        />
+      </View>
     </View>
   );
 }

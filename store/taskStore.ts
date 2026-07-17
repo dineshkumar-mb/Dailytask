@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { Task, TaskFormData } from '../types/task';
-import 'react-native-get-random-values'; // Needed for UUID in React Native
-import { v4 as uuidv4 } from 'uuid';
 
 interface TaskState {
   tasks: Task[];
@@ -26,7 +24,7 @@ export const useTaskStore = create<TaskState>((set) => ({
   addTask: (data) => {
     const newTask: Task = {
       ...data,
-      id: uuidv4(),
+      id: Date.now().toString(),
       isCompleted: false,
       isArchived: false,
       createdAt: new Date(),

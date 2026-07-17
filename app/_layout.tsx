@@ -87,11 +87,10 @@ export default function RootLayout() {
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
 
         {/* App Screens */}
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
         <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
         <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack>
     </GestureHandlerRootView>
   );

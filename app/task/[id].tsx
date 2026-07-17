@@ -92,6 +92,15 @@ export default function TaskDetails() {
           )}
         </View>
 
+        {/* Focus Mode Button */}
+        <TouchableOpacity
+          onPress={() => router.push(`/focus?taskId=${task.id}` as any)}
+          className="bg-blue-600 dark:bg-blue-500 rounded-2xl p-4 flex-row items-center justify-center mb-6 shadow-sm shadow-blue-500/30"
+        >
+          <Ionicons name="timer-outline" size={24} color="white" />
+          <Text className="text-white font-bold text-lg ml-2">Start Focus Mode</Text>
+        </TouchableOpacity>
+
         {/* Subtasks */}
         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-3">Subtasks</Text>
         <View className="bg-white dark:bg-gray-800 rounded-2xl p-4 mb-6 border border-gray-100 dark:border-gray-700 shadow-sm">

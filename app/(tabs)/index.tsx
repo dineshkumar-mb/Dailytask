@@ -50,7 +50,7 @@ export default function Home() {
   displayedTasks = displayedTasks.sort((a, b) => {
     if (sortBy === 'Alphabetical') return a.title.localeCompare(b.title);
     if (sortBy === 'Priority') {
-      const priorityWeight = { High: 3, Medium: 2, Low: 1 };
+      const priorityWeight: Record<string, number> = { Urgent: 4, High: 3, Medium: 2, Low: 1 };
       return priorityWeight[b.priority] - priorityWeight[a.priority];
     }
     // Newest

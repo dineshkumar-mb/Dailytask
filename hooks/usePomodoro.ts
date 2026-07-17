@@ -24,7 +24,7 @@ export function usePomodoro(initialSettings: Partial<PomodoroSettings> = {}) {
   const [isActive, setIsActive] = useState(false);
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Helper to get total seconds for a specific mode
   const getDurationForMode = useCallback((m: PomodoroMode) => {

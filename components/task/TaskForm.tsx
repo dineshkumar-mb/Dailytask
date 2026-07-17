@@ -20,13 +20,15 @@ interface TaskFormProps {
 
 export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps) {
   const { control, handleSubmit, formState: { errors } } = useForm<TaskFormData>({
-    resolver: zodResolver(TaskFormSchema),
+    resolver: zodResolver(TaskFormSchema) as any,
     defaultValues: {
       title: defaultValues?.title || '',
       category: defaultValues?.category || 'Personal',
       priority: defaultValues?.priority || 'Medium',
       dueDate: defaultValues?.dueDate,
       reminderDate: defaultValues?.reminderDate,
+      subtasks: defaultValues?.subtasks || [],
+      tags: defaultValues?.tags || [],
     }
   });
 

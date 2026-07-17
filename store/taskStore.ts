@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, TaskFormData } from '../types/task';
+import { Task, TaskFormData, TaskCategoryType } from '../types/task';
 
 export type FilterType = 'All' | 'Active' | 'Completed';
 export type SortType = 'Newest' | 'Priority' | 'Alphabetical';
+export type CategoryFilterType = 'All' | TaskCategoryType;
 
 interface TaskState {
   tasks: Task[];
   filterBy: FilterType;
   sortBy: SortType;
+  categoryFilter: CategoryFilterType;
   searchQuery: string;
   
   // Actions
@@ -18,8 +20,10 @@ interface TaskState {
   deleteTask: (id: string) => void;
   toggleComplete: (id: string) => void;
   clearTasks: () => void;
+  clearCompletedTasks: () => void;
   setFilter: (filter: FilterType) => void;
   setSort: (sort: SortType) => void;
+  setCategoryFilter: (category: CategoryFilterType) => void;
   setSearchQuery: (query: string) => void;
 }
 
@@ -30,10 +34,12 @@ export const useTaskStore = create<TaskState>()(
       tasks: [],
       filterBy: 'All',
       sortBy: 'Newest',
+      categoryFilter: 'All',
       searchQuery: '',
 
       setFilter: (filter) => set({ filterBy: filter }),
       setSort: (sort) => set({ sortBy: sort }),
+      setCategoryFilter: (category) => set({ categoryFilter: category }),
       setSearchQuery: (query) => set({ searchQuery: query }),
 
       addTask: (data) => {
@@ -70,6 +76,12 @@ export const useTaskStore = create<TaskState>()(
       },
 
       clearTasks: () => set({ tasks: [] }),
+      
+      clearCompletedTasks: () => {
+        set((state) => ({
+          tasks: state.tasks.filter((task) => !task.isCompleted)
+        }));
+      },
     }),
     {
       name: 'task-storage', // unique name for AsyncStorage key

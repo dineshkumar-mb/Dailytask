@@ -1,13 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Card } from '../ui/Card';
-
-export interface Task {
-  id: string;
-  title: string;
-  category: string;
-  priority: 'Low' | 'Medium' | 'High';
-  isCompleted: boolean;
-}
+import { Task } from '../../types/task';
 
 interface TaskCardProps {
   task: Task;

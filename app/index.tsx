@@ -3,12 +3,13 @@ import { View, Text } from 'react-native';
 import { router } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Button } from '../components/ui/Button';
-import { TaskCard, Task } from '../components/task/TaskCard';
+import { TaskCard } from '../components/task/TaskCard';
+import { Task } from '../types/task';
 
 const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Buy groceries', category: 'Shopping', priority: 'High', isCompleted: false },
-  { id: '2', title: 'Finish React Native course', category: 'Study', priority: 'Medium', isCompleted: false },
-  { id: '3', title: 'Schedule dentist appointment', category: 'Health', priority: 'Low', isCompleted: true },
+  { id: '1', title: 'Buy groceries', category: 'Shopping', priority: 'High', isCompleted: false, isArchived: false, createdAt: new Date() },
+  { id: '2', title: 'Finish React Native course', category: 'Study', priority: 'Medium', isCompleted: false, isArchived: false, createdAt: new Date() },
+  { id: '3', title: 'Schedule dentist appointment', category: 'Health', priority: 'Low', isCompleted: true, isArchived: false, createdAt: new Date() },
 ];
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
 
       {/* List */}
       <View className="flex-1">
+        {/* @ts-expect-error React 19 type mismatch for FlashList props */}
         <FlashList
           data={tasks}
           keyExtractor={(item) => item.id}

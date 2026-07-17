@@ -16,16 +16,17 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCardProps) {
-  const [isCompletedVisual, setIsCompletedVisual] = useState(task.isCompleted);
+  const [isCompletedVisual, setIsCompletedVisual] = useState(task.completed);
 
   // Sync visual state with actual prop if it changes externally
   useEffect(() => {
-    setIsCompletedVisual(task.isCompleted);
-  }, [task.isCompleted]);
+    setIsCompletedVisual(task.completed);
+  }, [task.completed]);
 
   let priorityColor = 'text-green-500 bg-green-100';
   if (task.priority === 'Medium') priorityColor = 'text-orange-500 bg-orange-100';
   if (task.priority === 'High') priorityColor = 'text-red-500 bg-red-100';
+  if (task.priority === 'Urgent') priorityColor = 'text-white bg-red-600';
 
   const handleDelete = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);

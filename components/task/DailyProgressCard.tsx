@@ -8,9 +8,9 @@ interface DailyProgressCardProps {
 
 export function DailyProgressCard({ tasks }: DailyProgressCardProps) {
   // Only count tasks that are not archived
-  const activeTasks = tasks.filter(t => !t.isArchived);
+  const activeTasks = tasks.filter(t => !t.archived);
   const total = activeTasks.length;
-  const completed = activeTasks.filter(t => t.isCompleted).length;
+  const completed = activeTasks.filter(t => t.completed).length;
   
   const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 

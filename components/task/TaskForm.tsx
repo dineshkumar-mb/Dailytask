@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Haptics from 'expo-haptics';
@@ -8,7 +9,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 
 const CATEGORIES: TaskCategoryType[] = ['Personal', 'Work', 'Shopping', 'Health', 'Study'];
-const PRIORITIES: TaskPriorityType[] = ['Low', 'Medium', 'High'];
+const PRIORITIES: TaskPriorityType[] = ['Low', 'Medium', 'High', 'Urgent'];
 
 interface TaskFormProps {
   defaultValues?: Partial<TaskFormData>;
@@ -23,8 +24,14 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
       title: defaultValues?.title || '',
       category: defaultValues?.category || 'Personal',
       priority: defaultValues?.priority || 'Medium',
+      dueDate: defaultValues?.dueDate,
+      reminderDate: defaultValues?.reminderDate,
     }
   });
+
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showDueTimePicker, setShowDueTimePicker] = useState(false);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
 
   const handleFormSubmit = (data: TaskFormData) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -93,6 +100,101 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        )}
+      />
+
+      {/* Due Date & Time */}
+      <Text className="text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2 mt-2">Due Date & Time</Text>
+      <Controller
+        control={control}
+        name="dueDate"
+        render={({ field: { onChange, value } }) => (
+          <View className="flex-row gap-3 mb-4">
+            <TouchableOpacity
+              onPress={() => setShowDueDatePicker(true)}
+              className="flex-1 px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+            >
+              <Text className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+                {value ? value.toLocaleDateString() : "Select Date"}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={() => setShowDueTimePicker(true)}
+              className="flex-1 px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+            >
+              <Text className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+                {value ? value.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "Select Time"}
+              </Text>
+            </TouchableOpacity>
+
+            {showDueDatePicker && (
+              <DateTimePicker
+                value={value || new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDueDatePicker(Platform.OS === 'ios');
+                  if (selectedDate) {
+                    // Keep existing time if value exists
+                    if (value) {
+                      selectedDate.setHours(value.getHours(), value.getMinutes());
+                    }
+                    onChange(selectedDate);
+                  }
+                }}
+              />
+            )}
+            
+            {showDueTimePicker && (
+              <DateTimePicker
+                value={value || new Date()}
+                mode="time"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDueTimePicker(Platform.OS === 'ios');
+                  if (selectedDate) {
+                    // Keep existing date if value exists
+                    if (value) {
+                      selectedDate.setFullYear(value.getFullYear(), value.getMonth(), value.getDate());
+                    }
+                    onChange(selectedDate);
+                  }
+                }}
+              />
+            )}
+          </View>
+        )}
+      />
+
+      {/* Reminder Time */}
+      <Text className="text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2 mt-2">Reminder</Text>
+      <Controller
+        control={control}
+        name="reminderDate"
+        render={({ field: { onChange, value } }) => (
+          <View className="mb-8">
+            <TouchableOpacity
+              onPress={() => setShowReminderPicker(true)}
+              className="px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+            >
+              <Text className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+                {value ? value.toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) : "Set a reminder (Optional)"}
+              </Text>
+            </TouchableOpacity>
+
+            {showReminderPicker && (
+              <DateTimePicker
+                value={value || new Date()}
+                mode={Platform.OS === 'ios' ? 'datetime' : 'date'}
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowReminderPicker(Platform.OS === 'ios');
+                  if (selectedDate) onChange(selectedDate);
+                }}
+              />
+            )}
           </View>
         )}
       />

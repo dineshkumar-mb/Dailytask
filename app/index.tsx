@@ -30,6 +30,9 @@ export default function Home() {
 
   // Apply filtering
   let displayedTasks = tasks.filter((task) => {
+    // Hide archived and deleted tasks from Home screen
+    if (task.archived || task.deleted) return false;
+
     if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
@@ -38,8 +41,8 @@ export default function Home() {
       return false;
     }
     
-    if (filterBy === 'Active') return !task.isCompleted;
-    if (filterBy === 'Completed') return task.isCompleted;
+    if (filterBy === 'Active') return !task.completed;
+    if (filterBy === 'Completed') return task.completed;
     return true; // 'All'
   });
 

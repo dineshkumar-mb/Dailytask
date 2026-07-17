@@ -4,6 +4,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
 import { useAuthStore } from '../store/authStore';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
 export default function Settings() {
   const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
@@ -40,6 +41,29 @@ export default function Settings() {
   return (
     <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-900">
       
+      {/* Organization Section */}
+      <View className="mt-6 px-5">
+        <Text className="text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase text-xs tracking-wider">
+          Organization
+        </Text>
+        
+        <View className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <TouchableOpacity 
+            onPress={() => router.push('/archived' as any)}
+            className="flex-row items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700"
+          >
+            <Text className="text-base font-medium text-gray-900 dark:text-white">Archived Tasks</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/trash' as any)}
+            className="flex-row items-center justify-between p-4"
+          >
+            <Text className="text-base font-medium text-gray-900 dark:text-white">Trash</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Preferences Section */}
       <View className="mt-6 mb-8 px-5">
         <Text className="text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase text-xs tracking-wider">

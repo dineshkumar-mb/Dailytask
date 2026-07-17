@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,9 +16,9 @@ interface TaskState {
   categoryFilter: CategoryFilterType;
   searchQuery: string;
   
-  // Actions
   addTask: (data: TaskFormData) => void;
-  updateTask: (id: string, data: Partial<TaskFormData>) => void;
+  updateTask: (id: string, data: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
   deleteTask: (id: string) => void;
   toggleComplete: (id: string) => void;
   clearTasks: () => void;
@@ -45,10 +47,14 @@ export const useTaskStore = create<TaskState>()(
       addTask: (data) => {
         const newTask: Task = {
           ...data,
-          id: Date.now().toString(),
-          isCompleted: false,
-          isArchived: false,
+          id: uuidv4(),
+          completed: false,
+          archived: false,
+          deleted: false,
+          subtasks: [],
+          tags: [],
           createdAt: new Date(),
+          updatedAt: new Date(),
         };
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
       },
@@ -56,7 +62,7 @@ export const useTaskStore = create<TaskState>()(
       updateTask: (id, data) => {
         set((state) => ({
           tasks: state.tasks.map((task) => 
-            task.id === id ? { ...task, ...data } : task
+            task.id === id ? { ...task, ...data, updatedAt: new Date() } : task
           ),
         }));
       },
@@ -69,9 +75,18 @@ export const useTaskStore = create<TaskState>()(
 
       toggleComplete: (id) => {
         set((state) => ({
-          tasks: state.tasks.map((task) => 
-            task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id === id) {
+              const isNowCompleted = !task.completed;
+              return { 
+                ...task, 
+                completed: isNowCompleted, 
+                completedAt: isNowCompleted ? new Date() : undefined,
+                updatedAt: new Date() 
+              };
+            }
+            return task;
+          }),
         }));
       },
 
@@ -79,7 +94,7 @@ export const useTaskStore = create<TaskState>()(
       
       clearCompletedTasks: () => {
         set((state) => ({
-          tasks: state.tasks.filter((task) => !task.isCompleted)
+          tasks: state.tasks.filter((task) => !task.completed)
         }));
       },
     }),

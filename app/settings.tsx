@@ -1,13 +1,23 @@
 import React from 'react';
 import { View, Text, Switch, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSettingsStore } from '../store/settingsStore';
+import { useTaskStore } from '../store/taskStore';
+
 export default function Settings() {
   const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
+  const clearTasks = useTaskStore((state) => state.clearTasks);
 
   const handleClearData = () => {
     Alert.alert('Clear Data', 'Are you sure you want to delete all tasks? This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => console.log('Delete all tasks (To be implemented)') }
+      { 
+        text: 'Delete', 
+        style: 'destructive', 
+        onPress: () => {
+          clearTasks();
+          Alert.alert('Success', 'All tasks have been deleted.');
+        } 
+      }
     ]);
   };
 

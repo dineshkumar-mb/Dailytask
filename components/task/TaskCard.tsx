@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import * as Haptics from 'expo-haptics';
 import { Task } from '../../types/task';
 import { Card } from '../ui/Card';
 
@@ -18,10 +19,20 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
   if (task.priority === 'Medium') priorityColor = 'text-orange-500 bg-orange-100';
   if (task.priority === 'High') priorityColor = 'text-red-500 bg-red-100';
 
+  const handleDelete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    onDelete();
+  };
+
+  const handleToggle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggleComplete();
+  };
+
   const renderRightActions = () => {
     return (
       <TouchableOpacity 
-        onPress={onDelete}
+        onPress={handleDelete}
         className="bg-red-500 justify-center items-center w-20 rounded-2xl mb-3 ml-3"
       >
         <Text className="text-white font-bold">Delete</Text>
@@ -47,7 +58,7 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
             
             {/* Checkbox */}
             <TouchableOpacity 
-              onPress={onToggleComplete}
+              onPress={handleToggle}
               className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center
                 ${task.isCompleted ? 'border-blue-500 bg-blue-500' : 'border-gray-300 bg-transparent'}`}
             >

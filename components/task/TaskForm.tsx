@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import * as Haptics from 'expo-haptics';
 import { TaskFormSchema, TaskFormData, TaskCategoryType, TaskPriorityType } from '../../types/task';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -24,6 +25,11 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
       priority: defaultValues?.priority || 'Medium',
     }
   });
+
+  const handleFormSubmit = (data: TaskFormData) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    onSubmit(data);
+  };
 
   return (
     <View>
@@ -94,7 +100,7 @@ export function TaskForm({ defaultValues, onSubmit, submitLabel }: TaskFormProps
       {/* Submit Button */}
       <Button 
         title={submitLabel} 
-        onPress={handleSubmit(onSubmit)} 
+        onPress={handleSubmit(handleFormSubmit)} 
         className="mt-4 mb-10"
       />
     </View>

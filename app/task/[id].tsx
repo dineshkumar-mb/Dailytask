@@ -33,6 +33,14 @@ export default function TaskDetails() {
           variant="primary"
         />
         <Button 
+          title="Delete Task" 
+          onPress={() => {
+            useTaskStore.getState().deleteTask(task.id);
+            router.back();
+          }} 
+          variant="danger"
+        />
+        <Button 
           title="Go Back" 
           onPress={() => router.back()} 
           variant="secondary"

@@ -1,9 +1,8 @@
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task, TaskFormData, TaskCategoryType } from '../types/task';
+import { TaskService } from '../services/TaskService';
+import { TaskRepository } from '../repository/TaskRepository';
+import { Alert } from 'react-native';
 
 export type FilterType = 'All' | 'Active' | 'Completed';
 export type SortType = 'Newest' | 'Priority' | 'Alphabetical';
@@ -15,92 +14,152 @@ interface TaskState {
   sortBy: SortType;
   categoryFilter: CategoryFilterType;
   searchQuery: string;
+  isLoaded: boolean;
   
-  addTask: (data: TaskFormData) => void;
-  updateTask: (id: string, data: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
-  deleteTask: (id: string) => void;
-  toggleComplete: (id: string) => void;
-  clearTasks: () => void;
-  clearCompletedTasks: () => void;
+  // Actions
+  loadTasks: () => Promise<void>;
+  addTask: (data: Partial<Task>) => Promise<void>;
+  updateTask: (id: string, data: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleComplete: (id: string) => Promise<void>;
+  clearTasks: () => Promise<void>; // Clear all data
+  clearCompletedTasks: () => Promise<void>;
   setFilter: (filter: FilterType) => void;
   setSort: (sort: SortType) => void;
   setCategoryFilter: (category: CategoryFilterType) => void;
   setSearchQuery: (query: string) => void;
 }
 
-// We can remove MOCK_TASKS since we'll rely on local storage!
 export const useTaskStore = create<TaskState>()(
-  persist(
-    (set) => ({
-      tasks: [],
-      filterBy: 'All',
-      sortBy: 'Newest',
-      categoryFilter: 'All',
-      searchQuery: '',
+  (set, get) => ({
+    tasks: [],
+    filterBy: 'All',
+    sortBy: 'Newest',
+    categoryFilter: 'All',
+    searchQuery: '',
+    isLoaded: false,
 
-      setFilter: (filter) => set({ filterBy: filter }),
-      setSort: (sort) => set({ sortBy: sort }),
-      setCategoryFilter: (category) => set({ categoryFilter: category }),
-      setSearchQuery: (query) => set({ searchQuery: query }),
+    setFilter: (filter) => set({ filterBy: filter }),
+    setSort: (sort) => set({ sortBy: sort }),
+    setCategoryFilter: (category) => set({ categoryFilter: category }),
+    setSearchQuery: (query) => set({ searchQuery: query }),
 
-      addTask: (data) => {
-        const newTask: Task = {
-          ...data,
-          id: uuidv4(),
-          completed: false,
-          archived: false,
-          deleted: false,
-          subtasks: [],
-          tags: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        set((state) => ({ tasks: [newTask, ...state.tasks] }));
-      },
+    loadTasks: async () => {
+      try {
+        const dbTasks = await TaskRepository.getAllTasks();
+        set({ tasks: dbTasks, isLoaded: true });
+      } catch (error) {
+        console.error("Failed to load tasks from DB", error);
+        Alert.alert("Database Error", "Failed to load your tasks.");
+      }
+    },
 
-      updateTask: (id, data) => {
-        set((state) => ({
-          tasks: state.tasks.map((task) => 
-            task.id === id ? { ...task, ...data, updatedAt: new Date() } : task
-          ),
-        }));
-      },
-
-      deleteTask: (id) => {
-        set((state) => ({
-          tasks: state.tasks.filter((task) => task.id !== id),
-        }));
-      },
-
-      toggleComplete: (id) => {
-        set((state) => ({
-          tasks: state.tasks.map((task) => {
-            if (task.id === id) {
-              const isNowCompleted = !task.completed;
-              return { 
-                ...task, 
-                completed: isNowCompleted, 
-                completedAt: isNowCompleted ? new Date() : undefined,
-                updatedAt: new Date() 
-              };
-            }
-            return task;
-          }),
-        }));
-      },
-
-      clearTasks: () => set({ tasks: [] }),
+    addTask: async (data) => {
+      // Create full task object to optimistically insert
+      const newTask = await TaskService.createTask(data); // In a real robust optimistic UI, we create the UUID client side, update state, THEN await service. TaskService.createTask does DB insert.
       
-      clearCompletedTasks: () => {
+      // Let's do pseudo-optimistic for add (Service creates it, then we add to UI)
+      // Since creating is fast locally, awaiting DB before UI update is usually fine for local SQLite.
+      set((state) => ({ tasks: [newTask, ...state.tasks] }));
+    },
+
+    updateTask: async (id, data) => {
+      const originalTasks = get().tasks;
+      
+      // 1. Optimistic UI Update
+      set((state) => ({
+        tasks: state.tasks.map((task) => 
+          task.id === id ? { ...task, ...data, updatedAt: new Date() } : task
+        ),
+      }));
+
+      // 2. Background SQLite Write
+      try {
+        await TaskService.updateTaskProperties(id, data);
+      } catch (error) {
+        // 3. Rollback on failure
+        console.error("Failed to update task", error);
+        set({ tasks: originalTasks });
+        Alert.alert("Sync Error", "Failed to save your changes.");
+      }
+    },
+
+    deleteTask: async (id) => {
+      const originalTasks = get().tasks;
+      
+      // 1. Optimistic Update
+      set((state) => ({
+        tasks: state.tasks.filter((task) => task.id !== id),
+      }));
+
+      // 2. Background DB Delete
+      try {
+        await TaskRepository.permanentlyDeleteTask(id);
+      } catch (error) {
+        set({ tasks: originalTasks });
+        Alert.alert("Sync Error", "Failed to delete task.");
+      }
+    },
+
+    toggleComplete: async (id) => {
+      const task = get().tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const originalTasks = get().tasks;
+      const isNowCompleted = !task.completed;
+
+      // 1. Optimistic Update
+      set((state) => ({
+        tasks: state.tasks.map((t) => {
+          if (t.id === id) {
+            return { 
+              ...t, 
+              completed: isNowCompleted, 
+              completedAt: isNowCompleted ? new Date() : undefined,
+              updatedAt: new Date() 
+            };
+          }
+          return t;
+        }),
+      }));
+
+      // 2. DB Update
+      try {
+        // Bypass service for a sec, just update repo
+        await TaskService.updateTaskProperties(id, { 
+          completed: isNowCompleted, 
+          completedAt: isNowCompleted ? new Date() : undefined 
+        });
+      } catch (error) {
+        set({ tasks: originalTasks });
+      }
+    },
+
+    clearTasks: async () => {
+      // Clear ALL tasks
+      try {
+        const tasks = get().tasks;
+        for (const t of tasks) {
+          await TaskRepository.permanentlyDeleteTask(t.id);
+        }
+        set({ tasks: [] });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    
+    clearCompletedTasks: async () => {
+      try {
+        const completedTasks = get().tasks.filter(t => t.completed);
+        for (const t of completedTasks) {
+          await TaskRepository.permanentlyDeleteTask(t.id);
+        }
         set((state) => ({
           tasks: state.tasks.filter((task) => !task.completed)
         }));
-      },
-    }),
-    {
-      name: 'task-storage', // unique name for AsyncStorage key
-      storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+      } catch (e) {
+        console.error(e);
+      }
+    },
+  })
 );

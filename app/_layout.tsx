@@ -5,6 +5,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from 'nativewind';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
+import migrations from '../drizzle/migrations';
+import { db } from '../db/client';
+import { useTaskStore } from '../store/taskStore';
+import { View, Text } from 'react-native';
 
 // Custom hook to protect routes
 function useProtectedRoute() {
@@ -28,6 +33,16 @@ export default function RootLayout() {
   
   const theme = useSettingsStore((state) => state.theme);
   const { colorScheme, setColorScheme } = useColorScheme();
+  
+  const { success, error } = useMigrations(db, migrations);
+  const loadTasks = useTaskStore((state) => state.loadTasks);
+  const isLoaded = useTaskStore((state) => state.isLoaded);
+
+  useEffect(() => {
+    if (success) {
+      loadTasks();
+    }
+  }, [success, loadTasks]);
 
   // Sync NativeWind with our Zustand store
   useEffect(() => {
@@ -39,6 +54,22 @@ export default function RootLayout() {
   }, [theme]);
 
   const isDark = colorScheme === 'dark';
+
+  if (error) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Text className="text-red-500">Database migration failed: {error.message}</Text>
+      </View>
+    );
+  }
+
+  if (!success || !isLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Text className="text-gray-500 dark:text-gray-400">Loading your data...</Text>
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

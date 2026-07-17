@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { Task } from '../../types/task';
 import { Card } from '../ui/Card';
 
@@ -11,11 +12,12 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 interface TaskCardProps {
   task: Task;
   onPress: () => void;
-  onToggleComplete: () => void;
-  onDelete: () => void;
+  onToggleComplete?: () => void;
+  onDelete?: () => void;
+  onReschedule?: () => void;
 }
 
-export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onPress, onToggleComplete, onDelete, onReschedule }: TaskCardProps) {
   const [isCompletedVisual, setIsCompletedVisual] = useState(task.completed);
 
   // Sync visual state with actual prop if it changes externally
@@ -29,8 +31,10 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
   if (task.priority === 'Urgent') priorityColor = 'text-white bg-red-600';
 
   const handleDelete = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    onDelete();
+    if (onDelete) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      onDelete();
+    }
   };
 
   const handleToggle = () => {
@@ -42,7 +46,9 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
     
     // Delay the actual store update so the user can see the strikethrough animation
     setTimeout(() => {
-      onToggleComplete();
+      if (onToggleComplete) {
+        onToggleComplete();
+      }
     }, 400); 
   };
 
@@ -63,7 +69,7 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
       exiting={FadeOutUp}
     >
       <Swipeable
-        renderRightActions={renderRightActions}
+        renderRightActions={onDelete ? renderRightActions : undefined}
         overshootRight={false}
       >
         <TouchableOpacity 
@@ -99,6 +105,19 @@ export function TaskCard({ task, onPress, onToggleComplete, onDelete }: TaskCard
                 {task.priority}
               </Text>
             </View>
+
+            {/* Reschedule Button */}
+            {onReschedule && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onReschedule();
+                }}
+                className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl ml-2 border border-gray-100 dark:border-gray-700 items-center justify-center"
+              >
+                <Ionicons name="calendar-outline" size={16} color="#3b82f6" />
+              </TouchableOpacity>
+            )}
 
           </Card>
         </TouchableOpacity>

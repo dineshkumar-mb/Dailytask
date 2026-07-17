@@ -185,3 +185,60 @@ To test and preview your application on a physical device without configuring Xc
    - **On iOS**: Open the native Camera app and point it at the QR code displayed in your terminal. Tap the yellow "Open in Expo Go" notification that appears.
    - **On Android**: Open the Expo Go app and tap "Scan QR Code", then point it at the terminal.
 4. **Live Reloading**: Once connected, any code changes you save in your editor will instantly reflect on your phone!
+
+---
+
+## 11. Future Roadmap & Production Infrastructure Checklist
+
+As the application moves past the initial phase, the following architectural improvements, production infrastructure requirements, and feature phases should be prioritized:
+
+### Web Storage Enhancement (IndexedDB)
+*   **Long-Term Strategy**: Currently, the web fallback layer utilizes `AsyncStorage`. For large datasets and advanced query filtering, migrating the web storage layer to **IndexedDB** is recommended to provide higher storage capacity, index-based querying, and better transactional performance.
+
+### Production Infrastructure Requirements
+*   **Decoupled Architecture & Event Bus**: Avoid direct module-to-module dependencies. Implement an **Event Bus** to dispatch app events (e.g. `Task Created`). Subscribing services (Analytics, Crash Reporting, Notifications, Widgets) can listen to these events asynchronously.
+*   **Logging & Crash Reporting**: Build a unified `Logger` service that forwards console logs to future remote crash reporting APIs (like Sentry or Bugsnag).
+*   **Transaction Integrity**: Refactor task mutation actions into atomic database transactions (e.g., `Create Task` -> `Insert Task` -> `Insert Subtasks` -> `Insert Tags` -> `Commit`) with rollback on any failure.
+*   **Database Version Management**: Implement a structured Database Version Manager to handle incremental migrations (Version 1 -> Version 2 -> Version 3) when upgrading schemas without user data loss.
+*   **Automated Testing Suite**: Establish unit and integration tests across all layers:
+    *   *Repository Tests* (SQLite vs Web Mock storage)
+    *   *Service Tests* (Business logic & transaction boundaries)
+    *   *Store Tests* (Zustand state mutations)
+    *   *Component Tests* (UI rendering and user interactions)
+
+### Feature Implementation Phases
+1.  **Phase 2.1 – Calendar Module**
+    *   Month, Week, and Daily agenda views.
+    *   Drag-and-drop rescheduling support.
+2.  **Phase 2.2 – Dashboard & Analytics**
+    *   Breakdown of Today's, Upcoming, Overdue, and Completed Today tasks.
+    *   Productivity Score calculation.
+3.  **Phase 2.3 – Focus Mode**
+    *   One task at a time view.
+    *   Integrated Pomodoro timer and progress tracking.
+4.  **Phase 3 – Notifications & Reminders**
+    *   Due date and early reminders.
+    *   Daily planning push notifications.
+    *   Action buttons (Complete, Snooze) directly from notification cards.
+5.  **Phase 4 – Advanced Analytics**
+    *   Completion trends, streaks, and category distributions.
+
+### Long-Term Vision: Personal Productivity Platform
+The application's modular design allows it to grow beyond simple task management into a complete productivity ecosystem:
+```text
+Core Platform
+├── Tasks
+├── Habits
+├── Goals
+├── Notes
+├── Calendar
+├── Reminders
+├── Focus Sessions
+├── Journal
+├── AI Assistant
+├── Analytics
+├── Widgets
+├── Cloud Sync
+├── Team Collaboration
+└── Automation Rules
+```

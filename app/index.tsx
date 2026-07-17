@@ -99,6 +99,7 @@ export default function Home() {
               task={item} 
               onPress={() => router.push(`/task/${item.id}` as any)}
               onToggleComplete={() => toggleTask(item.id)}
+              onDelete={() => useTaskStore.getState().deleteTask(item.id)}
             />
           )}
         />

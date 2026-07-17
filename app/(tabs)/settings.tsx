@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Switch, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useSettingsStore } from '../store/settingsStore';
-import { useTaskStore } from '../store/taskStore';
-import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
+import { useTaskStore } from '../../store/taskStore';
+import { useAuthStore } from '../../store/authStore';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 export default function Settings() {

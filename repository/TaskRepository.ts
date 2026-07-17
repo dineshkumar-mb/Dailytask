@@ -3,6 +3,8 @@ import { db } from '../db/client';
 import { tasks, subtasks } from '../db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, Subtask } from '../types/task';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Note: In a production app, we would use Drizzle's relational queries
 // Since this is a lightweight repository, we'll implement basic CRUD
@@ -12,6 +14,30 @@ export class TaskRepository {
    * Fetch all tasks that are NOT permanently deleted
    */
   static async getAllTasks(): Promise<Task[]> {
+    if (Platform.OS === 'web') {
+      const data = await AsyncStorage.getItem('web-tasks');
+      if (!data) return [];
+      try {
+        const parsed = JSON.parse(data);
+        return parsed.map((t: any) => ({
+          ...t,
+          dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
+          reminderDate: t.reminderDate ? new Date(t.reminderDate) : undefined,
+          createdAt: new Date(t.createdAt),
+          updatedAt: new Date(t.updatedAt),
+          completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
+          subtasks: (t.subtasks || []).map((st: any) => ({
+            ...st,
+            createdAt: new Date(st.createdAt),
+            completedAt: st.completedAt ? new Date(st.completedAt) : undefined,
+          })),
+        }));
+      } catch (e) {
+        console.error("Failed to parse tasks from AsyncStorage", e);
+        return [];
+      }
+    }
+
     const allTasks = await db.select().from(tasks).where(eq(tasks.deleted, false));
     const allSubtasks = await db.select().from(subtasks);
     
@@ -19,8 +45,8 @@ export class TaskRepository {
     // In Drizzle we could use `db.query.tasks.findMany({ with: { subtasks: true } })` 
     // if relations were defined, but doing it manually is fine for Phase 1
     
-    return allTasks.map(t => {
-      const taskSubtasks = allSubtasks.filter(st => st.taskId === t.id);
+    return allTasks.map((t: any) => {
+      const taskSubtasks = allSubtasks.filter((st: any) => st.taskId === t.id);
       
       return {
         id: t.id,
@@ -36,7 +62,7 @@ export class TaskRepository {
           frequency: t.recurrenceFrequency as any,
           interval: t.recurrenceInterval || 1,
         } : undefined,
-        subtasks: taskSubtasks.map(st => ({
+        subtasks: taskSubtasks.map((st: any) => ({
           id: st.id,
           title: st.title,
           completed: st.completed,
@@ -60,7 +86,14 @@ export class TaskRepository {
    * Create a new task and its initial subtasks
    */
   static async addTask(task: Task): Promise<void> {
-    await db.transaction(async (tx) => {
+    if (Platform.OS === 'web') {
+      const allTasks = await this.getAllTasks();
+      allTasks.push(task);
+      await AsyncStorage.setItem('web-tasks', JSON.stringify(allTasks));
+      return;
+    }
+
+    await db.transaction(async (tx: any) => {
       // 1. Insert Task
       await tx.insert(tasks).values({
         id: task.id,
@@ -102,6 +135,24 @@ export class TaskRepository {
    * Update a task's properties
    */
   static async updateTask(id: string, updates: Partial<Task>): Promise<void> {
+    if (Platform.OS === 'web') {
+      const allTasks = await this.getAllTasks();
+      const updated = allTasks.map(t => {
+        if (t.id === id) {
+          const newSubtasks = updates.subtasks !== undefined ? updates.subtasks : t.subtasks;
+          return {
+            ...t,
+            ...updates,
+            subtasks: newSubtasks,
+            updatedAt: new Date(),
+          };
+        }
+        return t;
+      });
+      await AsyncStorage.setItem('web-tasks', JSON.stringify(updated));
+      return;
+    }
+
     const updatePayload: any = {
       updatedAt: new Date(),
     };
@@ -119,7 +170,7 @@ export class TaskRepository {
     if (updates.deleted !== undefined) updatePayload.deleted = updates.deleted;
     if (updates.completedAt !== undefined) updatePayload.completedAt = updates.completedAt;
 
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       // 1. Update main task table if there are changes
       if (Object.keys(updatePayload).length > 1) { // > 1 because updatedAt is always there
         await tx.update(tasks).set(updatePayload).where(eq(tasks.id, id));
@@ -148,6 +199,13 @@ export class TaskRepository {
    * Permanently delete a task
    */
   static async permanentlyDeleteTask(id: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      const allTasks = await this.getAllTasks();
+      const filtered = allTasks.filter(t => t.id !== id);
+      await AsyncStorage.setItem('web-tasks', JSON.stringify(filtered));
+      return;
+    }
+
     // Relying on ON DELETE CASCADE for subtasks/tags/attachments
     await db.delete(tasks).where(eq(tasks.id, id));
   }

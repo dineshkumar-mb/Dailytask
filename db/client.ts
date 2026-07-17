@@ -1,10 +1,14 @@
-import { openDatabaseSync } from 'expo-sqlite';
-import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { Platform } from 'react-native';
 
 export const DATABASE_NAME = 'dailytasks.db';
 
-// Create a synchronous connection to the database
-export const sqliteDb = openDatabaseSync(DATABASE_NAME);
+export let sqliteDb: any = null;
+export let db: any = null;
 
-// Wrap it with Drizzle ORM
-export const db = drizzle(sqliteDb);
+if (Platform.OS !== 'web') {
+  const { openDatabaseSync } = require('expo-sqlite');
+  const { drizzle } = require('drizzle-orm/expo-sqlite');
+  
+  sqliteDb = openDatabaseSync(DATABASE_NAME);
+  db = drizzle(sqliteDb);
+}

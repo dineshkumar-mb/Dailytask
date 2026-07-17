@@ -9,7 +9,7 @@ import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import migrations from '../drizzle/migrations';
 import { db } from '../db/client';
 import { useTaskStore } from '../store/taskStore';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 
 // Custom hook to protect routes
 function useProtectedRoute() {
@@ -28,12 +28,7 @@ function useProtectedRoute() {
   }, [isLoggedIn, segments]);
 }
 
-export default function RootLayout() {
-  useProtectedRoute();
-  
-  const theme = useSettingsStore((state) => state.theme);
-  const { colorScheme, setColorScheme } = useColorScheme();
-  
+function NativeInitializer({ children }: { children: React.ReactNode }) {
   const { success, error } = useMigrations(db, migrations);
   const loadTasks = useTaskStore((state) => state.loadTasks);
   const isLoaded = useTaskStore((state) => state.isLoaded);
@@ -43,17 +38,6 @@ export default function RootLayout() {
       loadTasks();
     }
   }, [success, loadTasks]);
-
-  // Sync NativeWind with our Zustand store
-  useEffect(() => {
-    try {
-      setColorScheme(theme);
-    } catch (e) {
-      // Ignored: NativeWind occasionally throws on web depending on config cache
-    }
-  }, [theme]);
-
-  const isDark = colorScheme === 'dark';
 
   if (error) {
     return (
@@ -71,27 +55,70 @@ export default function RootLayout() {
     );
   }
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: isDark ? '#111827' : '#f9fafb' }, // dark:bg-gray-900 or bg-gray-50
-          headerShadowVisible: false,
-          headerTintColor: isDark ? '#ffffff' : '#111827',
-          headerTitleStyle: { fontWeight: 'bold' },
-        }}
-      >
-        {/* Auth Screens */}
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+  return <>{children}</>;
+}
 
-        {/* App Screens */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
-        <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
-        <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
-      </Stack>
-    </GestureHandlerRootView>
+function WebInitializer({ children }: { children: React.ReactNode }) {
+  const loadTasks = useTaskStore((state) => state.loadTasks);
+  const isLoaded = useTaskStore((state) => state.isLoaded);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
+
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Text className="text-gray-500 dark:text-gray-400">Loading your data...</Text>
+      </View>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+const Initializer = Platform.OS === 'web' ? WebInitializer : NativeInitializer;
+
+export default function RootLayout() {
+  useProtectedRoute();
+  
+  const theme = useSettingsStore((state) => state.theme);
+  const { colorScheme, setColorScheme } = useColorScheme();
+
+  // Sync NativeWind with our Zustand store
+  useEffect(() => {
+    try {
+      setColorScheme(theme);
+    } catch (e) {
+      // Ignored: NativeWind occasionally throws on web depending on config cache
+    }
+  }, [theme]);
+
+  const isDark = colorScheme === 'dark';
+
+  return (
+    <Initializer>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: isDark ? '#111827' : '#f9fafb' }, // dark:bg-gray-900 or bg-gray-50
+            headerShadowVisible: false,
+            headerTintColor: isDark ? '#ffffff' : '#111827',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        >
+          {/* Auth Screens */}
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+          <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+
+          {/* App Screens */}
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
+          <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
+          <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
+        </Stack>
+      </GestureHandlerRootView>
+    </Initializer>
   );
 }

@@ -1,6 +1,10 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Card } from '../ui/Card';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { Task } from '../../types/task';
+import { Card } from '../ui/Card';
+
+// Create an animated version of TouchableOpacity so we can attach layout animations to it
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface TaskCardProps {
   task: Task;
@@ -15,7 +19,13 @@ export function TaskCard({ task, onPress, onToggleComplete }: TaskCardProps) {
   if (task.priority === 'High') priorityColor = 'text-red-500 bg-red-100';
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} className="mb-3">
+    <AnimatedTouchableOpacity 
+      entering={FadeInDown.springify().damping(12)}
+      exiting={FadeOutUp}
+      onPress={onPress} 
+      activeOpacity={0.8} 
+      className="mb-3"
+    >
       <Card className={`flex-row items-center p-4 ${task.isCompleted ? 'opacity-60' : 'opacity-100'}`}>
         
         {/* Checkbox (Mock for now) */}
@@ -46,6 +56,6 @@ export function TaskCard({ task, onPress, onToggleComplete }: TaskCardProps) {
         </View>
 
       </Card>
-    </TouchableOpacity>
+    </AnimatedTouchableOpacity>
   );
 }

@@ -1,23 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text } from 'react-native';
 import { router } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Button } from '../components/ui/Button';
 import { TaskCard } from '../components/task/TaskCard';
-import { Task } from '../types/task';
-
-const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Buy groceries', category: 'Shopping', priority: 'High', isCompleted: false, isArchived: false, createdAt: new Date() },
-  { id: '2', title: 'Finish React Native course', category: 'Study', priority: 'Medium', isCompleted: false, isArchived: false, createdAt: new Date() },
-  { id: '3', title: 'Schedule dentist appointment', category: 'Health', priority: 'Low', isCompleted: true, isArchived: false, createdAt: new Date() },
-];
+import { useTaskStore } from '../store/taskStore';
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted } : t));
-  };
+  // Pull data and actions directly from our global store!
+  const tasks = useTaskStore((state) => state.tasks);
+  const toggleTask = useTaskStore((state) => state.toggleComplete);
 
   return (
     <View className="flex-1 bg-gray-50 pt-12 px-5">

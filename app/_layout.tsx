@@ -5,24 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from 'nativewind';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
-import type * as NotificationsType from 'expo-notifications';
-import { usePushNotifications } from '../hooks/usePushNotifications';
 
-let Notifications: typeof NotificationsType | null = null;
-try {
-  Notifications = require('expo-notifications');
-  Notifications?.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-} catch (e) {
-  console.warn('Push notifications not available in this environment (e.g. Expo Go on Android).');
-}
 // Custom hook to protect routes
 function useProtectedRoute() {
   const segments = useSegments();
@@ -42,14 +25,17 @@ function useProtectedRoute() {
 
 export default function RootLayout() {
   useProtectedRoute();
-  usePushNotifications();
   
   const theme = useSettingsStore((state) => state.theme);
   const { colorScheme, setColorScheme } = useColorScheme();
 
   // Sync NativeWind with our Zustand store
   useEffect(() => {
-    setColorScheme(theme);
+    try {
+      setColorScheme(theme);
+    } catch (e) {
+      // Ignored: NativeWind occasionally throws on web depending on config cache
+    }
   }, [theme]);
 
   const isDark = colorScheme === 'dark';

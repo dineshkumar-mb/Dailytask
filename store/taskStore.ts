@@ -1,14 +1,21 @@
 import { create } from 'zustand';
 import { Task, TaskFormData } from '../types/task';
 
+export type FilterType = 'All' | 'Active' | 'Completed';
+export type SortType = 'Newest' | 'Priority' | 'Alphabetical';
+
 interface TaskState {
   tasks: Task[];
+  filterBy: FilterType;
+  sortBy: SortType;
   
   // Actions
   addTask: (data: TaskFormData) => void;
   updateTask: (id: string, data: Partial<TaskFormData>) => void;
   deleteTask: (id: string) => void;
   toggleComplete: (id: string) => void;
+  setFilter: (filter: FilterType) => void;
+  setSort: (sort: SortType) => void;
 }
 
 // Initial mock data just so we have something to look at!
@@ -20,6 +27,11 @@ const MOCK_TASKS: Task[] = [
 
 export const useTaskStore = create<TaskState>((set) => ({
   tasks: MOCK_TASKS,
+  filterBy: 'All',
+  sortBy: 'Newest',
+
+  setFilter: (filter) => set({ filterBy: filter }),
+  setSort: (sort) => set({ sortBy: sort }),
 
   addTask: (data) => {
     const newTask: Task = {

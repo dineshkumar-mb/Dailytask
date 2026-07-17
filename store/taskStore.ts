@@ -10,6 +10,7 @@ interface TaskState {
   tasks: Task[];
   filterBy: FilterType;
   sortBy: SortType;
+  searchQuery: string;
   
   // Actions
   addTask: (data: TaskFormData) => void;
@@ -19,6 +20,7 @@ interface TaskState {
   clearTasks: () => void;
   setFilter: (filter: FilterType) => void;
   setSort: (sort: SortType) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 // We can remove MOCK_TASKS since we'll rely on local storage!
@@ -28,9 +30,11 @@ export const useTaskStore = create<TaskState>()(
       tasks: [],
       filterBy: 'All',
       sortBy: 'Newest',
+      searchQuery: '',
 
       setFilter: (filter) => set({ filterBy: filter }),
       setSort: (sort) => set({ sortBy: sort }),
+      setSearchQuery: (query) => set({ searchQuery: query }),
 
       addTask: (data) => {
         const newTask: Task = {

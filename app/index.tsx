@@ -3,22 +3,31 @@ import { View, Text, TouchableOpacity, ScrollView, FlatList } from 'react-native
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { TaskCard } from '../components/task/TaskCard';
 import { useTaskStore, FilterType, SortType } from '../store/taskStore';
+import { useAuthStore } from '../store/authStore';
 
 const FILTERS: FilterType[] = ['All', 'Active', 'Completed'];
 const SORTS: SortType[] = ['Newest', 'Priority', 'Alphabetical'];
 
 export default function Home() {
+  const userName = useAuthStore((state) => state.userName);
   const tasks = useTaskStore((state) => state.tasks);
   const toggleTask = useTaskStore((state) => state.toggleComplete);
   const filterBy = useTaskStore((state) => state.filterBy);
   const sortBy = useTaskStore((state) => state.sortBy);
+  const searchQuery = useTaskStore((state) => state.searchQuery);
   const setFilter = useTaskStore((state) => state.setFilter);
   const setSort = useTaskStore((state) => state.setSort);
+  const setSearchQuery = useTaskStore((state) => state.setSearchQuery);
 
   // Apply filtering
   let displayedTasks = tasks.filter((task) => {
+    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
     if (filterBy === 'Active') return !task.isCompleted;
     if (filterBy === 'Completed') return task.isCompleted;
     return true; // 'All'
@@ -41,7 +50,7 @@ export default function Home() {
       {/* Header */}
       <View className="flex-row justify-between items-center mb-6">
         <View>
-          <Text className="text-3xl font-bold text-gray-900 dark:text-white">Hello there 👋</Text>
+          <Text className="text-3xl font-bold text-gray-900 dark:text-white">Hello, {userName || 'there'} 👋</Text>
           <Text className="text-gray-500 dark:text-gray-400 mt-1">Here are your tasks for today.</Text>
         </View>
         
@@ -55,34 +64,57 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      {/* Filtering and Sorting Chips */}
-      <View className="mb-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-3">
-          {FILTERS.map((f) => (
-            <TouchableOpacity 
-              key={f}
-              onPress={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full border ${
-                filterBy === f ? 'bg-blue-500 border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700'
-              }`}
-            >
-              <Text className={`${filterBy === f ? 'text-white' : 'text-gray-600 dark:text-gray-300'} font-medium`}>{f}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      {/* Search Bar */}
+      <View className="mb-2">
+        <Input 
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          className="bg-white dark:bg-gray-800 mb-2"
+        />
+      </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-          {SORTS.map((s) => (
-            <TouchableOpacity 
-              key={s}
-              onPress={() => setSort(s)}
-              className={`px-4 py-1.5 rounded-full border ${
-                sortBy === s ? 'bg-gray-800 dark:bg-gray-700 border-gray-800 dark:border-gray-700' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700'
-              }`}
-            >
-              <Text className={`${sortBy === s ? 'text-white' : 'text-gray-600 dark:text-gray-300'} text-xs font-medium`}>Sort: {s}</Text>
-            </TouchableOpacity>
-          ))}
+      {/* Filtering and Sorting Chips */}
+      <View className="mb-5 mt-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View className="flex-row gap-2 items-center py-1">
+            {FILTERS.map((f) => {
+              const isActive = filterBy === f;
+              return (
+                <TouchableOpacity 
+                  key={f}
+                  onPress={() => setFilter(f)}
+                  className={`px-5 py-2 rounded-2xl ${
+                    isActive 
+                      ? 'bg-blue-100 dark:bg-blue-500/20' 
+                      : 'bg-gray-100 dark:bg-gray-800/60'
+                  }`}
+                >
+                  <Text className={`${isActive ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'} text-[13px] tracking-wide`}>{f}</Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            <View className="w-[2px] h-6 bg-gray-200 dark:bg-gray-700 mx-2 rounded-full" />
+
+            {SORTS.map((s) => {
+              const isActive = sortBy === s;
+              return (
+                <TouchableOpacity 
+                  key={s}
+                  onPress={() => setSort(s)}
+                  className={`px-5 py-2 rounded-2xl flex-row items-center gap-1.5 ${
+                    isActive 
+                      ? 'bg-purple-100 dark:bg-purple-500/20' 
+                      : 'bg-gray-100 dark:bg-gray-800/60'
+                  }`}
+                >
+                  {isActive && <Ionicons name="swap-vertical" size={14} color="#a855f7" />}
+                  <Text className={`${isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'} text-[13px] tracking-wide`}>{s}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </ScrollView>
       </View>
 

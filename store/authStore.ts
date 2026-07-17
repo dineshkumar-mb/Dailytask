@@ -6,6 +6,7 @@ import { LoginFormData } from '../types/auth';
 interface AuthState {
   isLoggedIn: boolean;
   isLoading: boolean;
+  userName: string | null;
   
   // Actions
   login: (data: LoginFormData) => Promise<void>;
@@ -17,16 +18,22 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       isLoggedIn: false,
       isLoading: false,
+      userName: null,
 
       login: async (data: LoginFormData) => {
         set({ isLoading: true });
         // Simulate a 1 second network delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        set({ isLoggedIn: true, isLoading: false });
+        
+        // Extract a simple username from the email
+        const namePart = data.email.split('@')[0];
+        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1).replace(/\./g, ' ');
+
+        set({ isLoggedIn: true, isLoading: false, userName: formattedName });
       },
 
       logout: () => {
-        set({ isLoggedIn: false });
+        set({ isLoggedIn: false, userName: null });
       },
     }),
     {

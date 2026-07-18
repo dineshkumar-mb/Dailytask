@@ -85,6 +85,18 @@ export default function Login() {
           isLoading={isLoading}
         />
       </View>
+
+      {/* Sign up link */}
+      <View className="flex-row justify-center items-center mt-6 gap-1">
+        <Text className="text-gray-500 dark:text-gray-400 text-sm">Don't have an account?</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/signup' as any)}
+          accessibilityLabel="Create a new account"
+          accessibilityRole="button"
+        >
+          <Text className="text-blue-500 font-semibold text-sm"> Create account</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }

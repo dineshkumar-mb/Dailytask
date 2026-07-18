@@ -24,7 +24,11 @@ function useProtectedRoute() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   useEffect(() => {
-    const inAuthGroup = segments[0] === 'login' || segments[0] === 'forgot-password' || segments[0] === 'reset-password';
+    const inAuthGroup =
+      segments[0] === 'login' ||
+      segments[0] === 'signup' ||
+      segments[0] === 'forgot-password' ||
+      segments[0] === 'reset-password';
 
     if (!isLoggedIn && !inAuthGroup) {
       router.replace('/login');
@@ -158,6 +162,7 @@ export default function RootLayout() {
           >
             {/* Auth Screens */}
             <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="signup" options={{ headerShown: false }} />
             <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
             <Stack.Screen name="reset-password" options={{ headerShown: false }} />
 

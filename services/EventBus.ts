@@ -1,3 +1,5 @@
+import { Logger } from './Logger';
+
 export type EventType = 
   | 'TASK_CREATED' 
   | 'TASK_UPDATED' 
@@ -36,7 +38,7 @@ export class EventBus {
         try {
           callback(payload);
         } catch (err) {
-          console.error(`Error in event listener for ${event}:`, err);
+          Logger.error(`[EventBus] Error in listener for event "${event}":`, err);
         }
       });
     }

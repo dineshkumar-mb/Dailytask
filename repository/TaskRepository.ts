@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Task, Subtask } from '../types/task';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logger } from '../services/Logger';
+
 
 // Note: In a production app, we would use Drizzle's relational queries
 // Since this is a lightweight repository, we'll implement basic CRUD
@@ -33,7 +35,7 @@ export class TaskRepository {
           })),
         }));
       } catch (e) {
-        console.error("Failed to parse tasks from AsyncStorage", e);
+        Logger.error('[TaskRepository] Failed to parse tasks from AsyncStorage.', e);
         return [];
       }
     }

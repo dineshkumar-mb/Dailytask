@@ -11,8 +11,8 @@ import { db } from '../db/client';
 import { useTaskStore } from '../store/taskStore';
 import { View, Text, Platform } from 'react-native';
 import { NotificationService, setNotificationHandler } from '../services/NotificationService';
-import { SecureStoreService } from '../services/SecureStoreService';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { Logger } from '../services/Logger';
 
 // Register notification handler at module level (must be outside any component)
 setNotificationHandler();
@@ -91,22 +91,12 @@ export default function RootLayout() {
   
   const theme = useSettingsStore((state) => state.theme);
   const notificationPrefs = useSettingsStore((state) => state.notifications);
-  const setGeminiApiKey = useSettingsStore((state) => state.setGeminiApiKey);
+  const loadApiKey = useSettingsStore((state) => state.loadApiKey);
   const { colorScheme, setColorScheme } = useColorScheme();
 
-  // Load API Key from secure store on mount
+  // Load API key from SecureStore on mount (also performs one-time migration from AsyncStorage)
   useEffect(() => {
-    async function loadSecretKey() {
-      try {
-        const key = await SecureStoreService.getItem('geminiApiKey');
-        if (key) {
-          setGeminiApiKey(key);
-        }
-      } catch (e) {
-        console.error('Failed to load secure API key', e);
-      }
-    }
-    loadSecretKey();
+    loadApiKey().catch((e) => Logger.error('[RootLayout] Failed to load API key on startup.', e));
   }, []);
 
   // Sync NativeWind with our Zustand store

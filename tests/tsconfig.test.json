@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "outDir": "./.test-out"
+  },
+  "include": ["./**/*.ts", "../services/**/*.ts", "../utils/**/*.ts", "../types/**/*.ts"]
+}

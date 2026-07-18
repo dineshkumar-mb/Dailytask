@@ -5,16 +5,15 @@ import { useTaskStore } from '../../store/taskStore';
 import { useAuthStore } from '../../store/authStore';
 import { router } from 'expo-router';
 import { NotificationSettingsSection } from '../../components/settings/NotificationSettingsSection';
-import { SecureStoreService } from '../../services/SecureStoreService';
 
 export default function Settings() {
-  const { theme, setTheme, geminiApiKey, setGeminiApiKey } = useSettingsStore();
+  const { theme, setTheme, geminiApiKey, saveApiKey } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
   const logout = useAuthStore((state) => state.logout);
 
   const handleApiKeyChange = async (val: string) => {
-    setGeminiApiKey(val);
-    await SecureStoreService.setItem('geminiApiKey', val);
+    // saveApiKey writes to SecureStore and updates in-memory state
+    await saveApiKey(val);
   };
 
   const handleClearData = () => {

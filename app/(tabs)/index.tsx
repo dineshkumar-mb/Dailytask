@@ -84,21 +84,21 @@ export default function Home() {
             <MiniTaskListWidget 
               title="Today's Tasks" 
               tasks={metrics?.todayTasks || []} 
-              onSeeAll={() => console.log('See All Today')} 
+              onSeeAll={() => router.push('/(tabs)/calendar' as any)} 
               colorClass="text-blue-500" 
             />
             
             <MiniTaskListWidget 
               title="Overdue" 
               tasks={metrics?.overdueTasks || []} 
-              onSeeAll={() => console.log('See All Overdue')} 
+              onSeeAll={() => router.push('/(tabs)/calendar' as any)} 
               colorClass="text-red-500" 
             />
             
             <MiniTaskListWidget 
               title="Upcoming" 
               tasks={metrics?.upcomingTasks || []} 
-              onSeeAll={() => console.log('See All Upcoming')} 
+              onSeeAll={() => router.push('/(tabs)/calendar' as any)} 
               colorClass="text-purple-500" 
             />
           </>

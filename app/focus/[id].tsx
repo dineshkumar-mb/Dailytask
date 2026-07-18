@@ -137,7 +137,8 @@ export default function FocusScreen() {
   // ─── User actions ───
   const handleStart = () => {
     const minutes = POMODORO_CONFIG[cycleMode];
-    startSession(taskId || null, cycleMode, minutes);
+    const cleanTaskId = taskId === 'free' ? null : (taskId || null);
+    startSession(cleanTaskId, cycleMode, minutes);
     setShowCompletionModal(false);
   };
 
@@ -164,13 +165,18 @@ export default function FocusScreen() {
   };
 
   const handleCompleteTask = () => {
-    if (task && !task.completed) {
-      toggleComplete(task.id);
+    if (task) {
+      if (!task.completed) {
+        toggleComplete(task.id);
+      }
+      setShowCompletionModal(false);
+      Alert.alert('🎉 Task Completed!', `"${task.title}" has been marked as done.`, [
+        { text: 'Great!', onPress: () => router.back() },
+      ]);
+    } else {
+      setShowCompletionModal(false);
+      router.back();
     }
-    setShowCompletionModal(false);
-    Alert.alert('🎉 Task Completed!', `"${task?.title}" has been marked as done.`, [
-      { text: 'Great!', onPress: () => router.back() },
-    ]);
   };
 
   const handleNextBreak = async () => {
@@ -224,12 +230,14 @@ export default function FocusScreen() {
             {sessionsCompleted} session{sessionsCompleted > 1 ? 's' : ''} completed today
           </Text>
 
-          <TouchableOpacity
-            className="w-full bg-purple-600 rounded-2xl p-4 items-center mb-3"
-            onPress={handleCompleteTask}
-          >
-            <Text className="text-white font-bold text-base">✅ Complete Task</Text>
-          </TouchableOpacity>
+          {task && (
+            <TouchableOpacity
+              className="w-full bg-purple-600 rounded-2xl p-4 items-center mb-3"
+              onPress={handleCompleteTask}
+            >
+              <Text className="text-white font-bold text-base">✅ Complete Task</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             className="w-full bg-gray-700 rounded-2xl p-4 items-center mb-3"

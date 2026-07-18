@@ -11,6 +11,8 @@ import { db } from '../db/client';
 import { useTaskStore } from '../store/taskStore';
 import { View, Text, Platform } from 'react-native';
 import { NotificationService, setNotificationHandler } from '../services/NotificationService';
+import { SecureStoreService } from '../services/SecureStoreService';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 
 // Register notification handler at module level (must be outside any component)
 setNotificationHandler();
@@ -89,7 +91,23 @@ export default function RootLayout() {
   
   const theme = useSettingsStore((state) => state.theme);
   const notificationPrefs = useSettingsStore((state) => state.notifications);
+  const setGeminiApiKey = useSettingsStore((state) => state.setGeminiApiKey);
   const { colorScheme, setColorScheme } = useColorScheme();
+
+  // Load API Key from secure store on mount
+  useEffect(() => {
+    async function loadSecretKey() {
+      try {
+        const key = await SecureStoreService.getItem('geminiApiKey');
+        if (key) {
+          setGeminiApiKey(key);
+        }
+      } catch (e) {
+        console.error('Failed to load secure API key', e);
+      }
+    }
+    loadSecretKey();
+  }, []);
 
   // Sync NativeWind with our Zustand store
   useEffect(() => {
@@ -137,29 +155,31 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <Initializer>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: isDark ? '#111827' : '#f9fafb' }, // dark:bg-gray-900 or bg-gray-50
-            headerShadowVisible: false,
-            headerTintColor: isDark ? '#ffffff' : '#111827',
-            headerTitleStyle: { fontWeight: 'bold' },
-          }}
-        >
-          {/* Auth Screens */}
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-          <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+    <ErrorBoundary>
+      <Initializer>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: isDark ? '#111827' : '#f9fafb' }, // dark:bg-gray-900 or bg-gray-50
+              headerShadowVisible: false,
+              headerTintColor: isDark ? '#ffffff' : '#111827',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          >
+            {/* Auth Screens */}
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+            <Stack.Screen name="reset-password" options={{ headerShown: false }} />
 
-          {/* App Screens */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
-          <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
-          <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
-          <Stack.Screen name="focus/[id]" options={{ headerShown: false }} />
-        </Stack>
-      </GestureHandlerRootView>
-    </Initializer>
+            {/* App Screens */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="add" options={{ title: 'Add New Task', presentation: 'modal' }} />
+            <Stack.Screen name="edit/[id]" options={{ title: 'Edit Task', presentation: 'modal' }} />
+            <Stack.Screen name="task/[id]" options={{ title: 'Task Details' }} />
+            <Stack.Screen name="focus/[id]" options={{ headerShown: false }} />
+          </Stack>
+        </GestureHandlerRootView>
+      </Initializer>
+    </ErrorBoundary>
   );
 }

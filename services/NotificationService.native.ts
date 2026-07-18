@@ -6,23 +6,50 @@
  * so the web bundle never touches expo-notifications.
  */
 
-import * as Notifications from 'expo-notifications';
+let Notifications: any = {
+  setNotificationHandler: () => {},
+  getPermissionsAsync: async () => ({ status: 'denied' }),
+  requestPermissionsAsync: async () => ({ status: 'denied' }),
+  scheduleNotificationAsync: async () => 'mock-id',
+  cancelScheduledNotificationAsync: async () => {},
+  addNotificationResponseReceivedListener: () => ({ remove: () => {} }),
+  SchedulableTriggerInputTypes: {
+    DATE: 'date',
+    TIME_INTERVAL: 'timeInterval',
+    DAILY: 'daily'
+  }
+};
+
+try {
+  const loadedNotifications = require('expo-notifications');
+  if (loadedNotifications) {
+    Notifications = loadedNotifications;
+  }
+} catch (error) {
+  console.warn('[NotificationService] Failed to load native expo-notifications (falling back to mock):', error);
+}
+
 import { v4 as uuidv4 } from 'uuid';
 import { Task } from '../types/task';
 import {
   NotificationRepository,
 } from '../repositories/NotificationRepository';
+import type { NotificationResponse } from 'expo-notifications';
 
 // ─── Handler must be set at module level (before any scheduling) ───────────
 export function setNotificationHandler() {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.warn('[NotificationService] Failed to set notification handler (likely running in Expo Go):', error);
+  }
 }
 
 // ─── Permissions ────────────────────────────────────────────────────────────
@@ -30,11 +57,16 @@ export type PermissionStatus = 'granted' | 'denied' | 'undetermined' | 'web';
 
 export class NotificationService {
   static async requestPermissions(): Promise<PermissionStatus> {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    if (existingStatus === 'granted') return 'granted';
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      if (existingStatus === 'granted') return 'granted';
 
-    const { status } = await Notifications.requestPermissionsAsync();
-    return status as PermissionStatus;
+      const { status } = await Notifications.requestPermissionsAsync();
+      return status as PermissionStatus;
+    } catch (error) {
+      console.warn('[NotificationService] Failed to request permissions (likely running in Expo Go):', error);
+      return 'denied';
+    }
   }
 
   // ─── Task Reminders ─────────────────────────────────────────────────────
@@ -215,23 +247,32 @@ export class NotificationService {
     onTaskNotification: (taskId: string) => void,
     onFocusNotification: () => void
   ): (() => void) | null {
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response: Notifications.NotificationResponse) => {
-        const data = response.notification.request.content.data as any;
-        NotificationRepository.updateStatus(
-          response.notification.request.identifier,
-          'triggered',
-          new Date()
-        ).catch(() => {});
+    try {
+      const subscription = Notifications.addNotificationResponseReceivedListener(
+        (response: NotificationResponse) => {
+          const data = response.notification.request.content.data as any;
+          NotificationRepository.updateStatus(
+            response.notification.request.identifier,
+            'triggered',
+            new Date()
+          ).catch(() => {});
 
-        if (data?.taskId) {
-          onTaskNotification(data.taskId);
-        } else {
-          onFocusNotification();
+          if (data?.taskId) {
+            onTaskNotification(data.taskId);
+          } else {
+            onFocusNotification();
+          }
         }
-      }
-    );
+      );
 
-    return () => subscription.remove();
+      return () => {
+        try {
+          subscription.remove();
+        } catch {}
+      };
+    } catch (e) {
+      console.warn('[NotificationService] Failed to add notification tap listener (Expo Go fallback):', e);
+      return null;
+    }
   }
 }

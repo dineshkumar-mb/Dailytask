@@ -20,6 +20,7 @@ interface SettingsState {
   theme: 'light' | 'dark' | 'system';
   notificationsEnabled: boolean; // legacy top-level toggle
   notifications: NotificationPreferences;
+  geminiApiKey: string | undefined;
 
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleNotifications: () => void;
@@ -27,6 +28,7 @@ interface SettingsState {
     key: K,
     value: NotificationPreferences[K]
   ) => void;
+  setGeminiApiKey: (key: string) => void;
 }
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
@@ -47,20 +49,28 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'system',
       notificationsEnabled: true,
       notifications: DEFAULT_NOTIFICATION_PREFS,
+      geminiApiKey: undefined,
 
       setTheme: (theme) => set({ theme }),
 
       toggleNotifications: () =>
-        set((state) => ({ notificationsEnabled: !state.notificationsEnabled })),
+          set((state) => ({ notificationsEnabled: !state.notificationsEnabled })),
 
       setNotificationPreference: (key, value) =>
-        set((state) => ({
-          notifications: { ...state.notifications, [key]: value },
-        })),
+          set((state) => ({
+            notifications: { ...state.notifications, [key]: value },
+          })),
+
+      setGeminiApiKey: (key) => set({ geminiApiKey: key }),
     }),
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        theme: state.theme,
+        notificationsEnabled: state.notificationsEnabled,
+        notifications: state.notifications,
+      }),
     }
   )
 );

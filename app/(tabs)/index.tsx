@@ -64,6 +64,7 @@ export default function Home() {
         }
       >
         <GreetingWidget />
+        <QuickActionsWidget />
         
         {isEmpty ? (
           <View className="bg-white dark:bg-gray-800 rounded-3xl p-8 items-center justify-center mb-6 border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
@@ -78,7 +79,6 @@ export default function Home() {
           <>
             <ProgressWidget />
             <StatsWidget />
-            <QuickActionsWidget />
             <WeeklyChartWidget />
             
             <MiniTaskListWidget 

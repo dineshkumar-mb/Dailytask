@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ActiveSession, FocusService, FocusSessionType } from '../services/FocusService';
+import { EventBus } from '../services/EventBus';
 
 interface FocusState {
   activeSession: ActiveSession | null;
@@ -24,6 +25,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
       activeSession: session,
       timeLeft: plannedSeconds,
     });
+    EventBus.publish('FOCUS_SESSION_STARTED', session);
   },
 
   pauseSession: () => {
@@ -52,6 +54,8 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     
     // Persist to DB in the background
     await FocusService.finishSession(session, status);
+    
+    EventBus.publish('FOCUS_SESSION_COMPLETED', { session, status });
   },
 
   tick: () => {

@@ -1,14 +1,21 @@
 import React from 'react';
-import { View, Text, Switch, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, Switch, ScrollView, TouchableOpacity, Alert, Platform, TextInput } from 'react-native';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useAuthStore } from '../../store/authStore';
 import { router } from 'expo-router';
 import { NotificationSettingsSection } from '../../components/settings/NotificationSettingsSection';
+import { SecureStoreService } from '../../services/SecureStoreService';
+
 export default function Settings() {
-  const { theme, notificationsEnabled, setTheme, toggleNotifications } = useSettingsStore();
+  const { theme, setTheme, geminiApiKey, setGeminiApiKey } = useSettingsStore();
   const clearTasks = useTaskStore((state) => state.clearTasks);
   const logout = useAuthStore((state) => state.logout);
+
+  const handleApiKeyChange = async (val: string) => {
+    setGeminiApiKey(val);
+    await SecureStoreService.setItem('geminiApiKey', val);
+  };
 
   const handleClearData = () => {
     Alert.alert('Clear Data', 'Are you sure you want to delete all tasks? This cannot be undone.', [
@@ -93,6 +100,29 @@ export default function Settings() {
           Notifications
         </Text>
         <NotificationSettingsSection />
+      </View>
+
+      {/* AI Settings Section */}
+      <View className="mt-6 mb-2 px-5">
+        <Text className="text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase text-xs tracking-wider">
+          AI Assistant
+        </Text>
+        <View className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <Text className="text-gray-900 dark:text-white font-medium text-sm mb-2">Gemini API Key</Text>
+          <TextInput
+            value={geminiApiKey || ''}
+            onChangeText={handleApiKeyChange}
+            placeholder="Enter your Gemini API Key..."
+            placeholderTextColor="#9ca3af"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm border border-gray-200 dark:border-gray-700"
+          />
+          <Text className="text-gray-400 dark:text-gray-500 text-xs mt-2 leading-relaxed">
+            Configure a Gemini API Key to enable live natural language command processing. Your key is stored locally on this device.
+          </Text>
+        </View>
       </View>
 
       {/* Danger Zone */}

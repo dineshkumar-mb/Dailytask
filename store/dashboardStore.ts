@@ -31,10 +31,11 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   },
 }));
 
-// Optional: We can automatically subscribe to taskStore changes to keep dashboard updated.
-// We debounce this slightly or just run it synchronously.
-useTaskStore.subscribe((state, prevState) => {
-  if (state.tasks !== prevState.tasks) {
-    useDashboardStore.getState().refreshDashboard();
-  }
-});
+import { EventBus } from '../services/EventBus';
+
+// Subscribe to Event Bus to decouple stores
+EventBus.subscribe('TASK_CREATED', () => useDashboardStore.getState().refreshDashboard());
+EventBus.subscribe('TASK_UPDATED', () => useDashboardStore.getState().refreshDashboard());
+EventBus.subscribe('TASK_DELETED', () => useDashboardStore.getState().refreshDashboard());
+EventBus.subscribe('TASK_COMPLETED', () => useDashboardStore.getState().refreshDashboard());
+EventBus.subscribe('FOCUS_SESSION_COMPLETED', () => useDashboardStore.getState().refreshDashboard());

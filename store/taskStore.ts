@@ -3,6 +3,7 @@ import { Task, TaskFormData, TaskCategoryType } from '../types/task';
 import { TaskService } from '../services/TaskService';
 import { TaskRepository } from '../repository/TaskRepository';
 import { Alert } from 'react-native';
+import { EventBus } from '../services/EventBus';
 
 export type FilterType = 'All' | 'Active' | 'Completed';
 export type SortType = 'Newest' | 'Priority' | 'Alphabetical';
@@ -61,6 +62,8 @@ export const useTaskStore = create<TaskState>()(
       // Let's do pseudo-optimistic for add (Service creates it, then we add to UI)
       // Since creating is fast locally, awaiting DB before UI update is usually fine for local SQLite.
       set((state) => ({ tasks: [newTask, ...state.tasks] }));
+      
+      EventBus.publish('TASK_CREATED', newTask);
     },
 
     updateTask: async (id, data) => {
@@ -76,6 +79,7 @@ export const useTaskStore = create<TaskState>()(
       // 2. Background SQLite Write
       try {
         await TaskService.updateTaskProperties(id, data);
+        EventBus.publish('TASK_UPDATED', { id, data });
       } catch (error) {
         // 3. Rollback on failure
         console.error("Failed to update task", error);
@@ -95,6 +99,7 @@ export const useTaskStore = create<TaskState>()(
       // 2. Background DB Delete
       try {
         await TaskRepository.permanentlyDeleteTask(id);
+        EventBus.publish('TASK_DELETED', id);
       } catch (error) {
         set({ tasks: originalTasks });
         Alert.alert("Sync Error", "Failed to delete task.");
@@ -130,6 +135,7 @@ export const useTaskStore = create<TaskState>()(
           completed: isNowCompleted, 
           completedAt: isNowCompleted ? new Date() : undefined 
         });
+        EventBus.publish('TASK_COMPLETED', { id, completed: isNowCompleted });
       } catch (error) {
         set({ tasks: originalTasks });
       }

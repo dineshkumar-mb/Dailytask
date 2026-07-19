@@ -10,6 +10,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { AIService } from '../../services/ai/AIService';
 import { ActionExecutor, validateAIResponse } from '../../services/ai/ActionExecutor';
 import { Logger } from '../../services/Logger';
+import { ChatMessage as AIChatMessage } from '../../services/ai/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +18,9 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'ai';
   text: string;
+  usedMemory?: boolean;
+  fromCache?: boolean;
+  toolsExecuted?: string[];
 }
 
 const INITIAL_MESSAGE: ChatMessage = {
@@ -89,7 +93,12 @@ export function AIChatModal({ visible, onClose }: AIChatModalProps) {
     setIsAiThinking(true);
 
     try {
-      const rawResult = await AIService.processMessage(msgText, apiKey, tasks);
+      const historyPayload: AIChatMessage[] = messages.map((m) => ({
+        role: m.role,
+        text: m.text,
+      }));
+
+      const rawResult = await AIService.processMessage(msgText, apiKey, tasks, historyPayload);
 
       // Validate AI response before executing any actions
       if (!validateAIResponse(rawResult)) {
@@ -106,7 +115,14 @@ export function AIChatModal({ visible, onClose }: AIChatModalProps) {
 
       setMessages((prev) => [
         ...prev,
-        { id: `ai-${Date.now()}`, role: 'ai', text: rawResult.message },
+        {
+          id: `ai-${Date.now()}`,
+          role: 'ai',
+          text: rawResult.message,
+          usedMemory: rawResult.usedMemory,
+          fromCache: rawResult.fromCache,
+          toolsExecuted: rawResult.toolCallsExecuted,
+        },
       ]);
     } catch (error) {
       Logger.error('[AIChatModal] Failed to process AI message.', error);
@@ -121,7 +137,7 @@ export function AIChatModal({ visible, onClose }: AIChatModalProps) {
     } finally {
       setIsAiThinking(false);
     }
-  }, [input, apiKey, tasks, onClose, isAiThinking]);
+  }, [input, apiKey, tasks, messages, onClose, isAiThinking]);
 
   const isSendDisabled = !input.trim() || isAiThinking;
 
@@ -182,6 +198,24 @@ export function AIChatModal({ visible, onClose }: AIChatModalProps) {
                 }`}
               >
                 <Text className="text-white text-sm leading-5">{msg.text}</Text>
+
+                {/* Sub-indicators */}
+                {(msg.usedMemory || msg.fromCache || (msg.toolsExecuted && msg.toolsExecuted.length > 0)) && (
+                  <View className="flex-row flex-wrap gap-2 mt-2 pt-2 border-t border-gray-700/50">
+                    {msg.usedMemory && (
+                      <View className="flex-row items-center gap-1 bg-indigo-500/20 px-2 py-0.5 rounded-md">
+                        <Ionicons name="bulb-outline" size={10} color="#818cf8" />
+                        <Text className="text-indigo-300 text-[10px]">Memory Context</Text>
+                      </View>
+                    )}
+                    {msg.fromCache && (
+                      <View className="flex-row items-center gap-1 bg-emerald-500/20 px-2 py-0.5 rounded-md">
+                        <Ionicons name="flash-outline" size={10} color="#34d399" />
+                        <Text className="text-emerald-300 text-[10px]">Cached Response</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
           ))}
@@ -190,7 +224,7 @@ export function AIChatModal({ visible, onClose }: AIChatModalProps) {
             <View className="mb-4 items-start" accessibilityLabel="AI is thinking">
               <View className="bg-gray-800 rounded-2xl rounded-bl-sm px-4 py-3 flex-row items-center gap-2">
                 <ActivityIndicator size="small" color="#818cf8" />
-                <Text className="text-gray-400 text-sm">Thinking...</Text>
+                <Text className="text-gray-400 text-sm">Reasoning & Executing...</Text>
               </View>
             </View>
           )}

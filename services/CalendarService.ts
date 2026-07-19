@@ -1,5 +1,4 @@
 import { Task } from '../types/task';
-import { useTaskStore } from '../store/taskStore';
 
 export class CalendarService {
   /**
@@ -16,6 +15,7 @@ export class CalendarService {
    * If newDateString is empty or null, it clears the due date.
    */
   static async rescheduleTask(taskId: string, newDateString: string | null): Promise<void> {
+    const { useTaskStore } = require('../store/taskStore');
     const updateTask = useTaskStore.getState().updateTask;
     
     if (!newDateString) {
@@ -25,7 +25,7 @@ export class CalendarService {
 
     // Set the new date, preserving the original time if it existed
     const tasks = useTaskStore.getState().tasks;
-    const task = tasks.find(t => t.id === taskId);
+    const task = tasks.find((t: Task) => t.id === taskId);
     const newDate = new Date(newDateString);
 
     if (task && task.dueDate) {

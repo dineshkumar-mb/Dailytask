@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { Task, TaskCategoryType } from '../types/task';
 import { TaskService } from '../services/TaskService';
 import { TaskRepository } from '../repository/TaskRepository';
+import { AIService } from '../services/ai/AIService';
 import { Logger } from '../services/Logger';
 import { ErrorHandler } from '../utils/ErrorHandler';
+
 
 export type FilterType = 'All' | 'Active' | 'Completed';
 export type SortType = 'Newest' | 'Priority' | 'Alphabetical';
@@ -61,6 +63,7 @@ export const useTaskStore = create<TaskState>()(
         // TaskService persists and publishes TASK_CREATED
         const newTask = await TaskService.createTask(data);
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
+        AIService.invalidateCache();
       } catch (error) {
         Logger.error('[TaskStore] Failed to add task.', error);
         ErrorHandler.handle(error, 'TaskStore.addTask');

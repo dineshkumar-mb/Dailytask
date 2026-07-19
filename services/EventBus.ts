@@ -6,7 +6,9 @@ export type EventType =
   | 'TASK_COMPLETED' 
   | 'TASK_DELETED' 
   | 'FOCUS_SESSION_STARTED' 
-  | 'FOCUS_SESSION_COMPLETED';
+  | 'FOCUS_SESSION_COMPLETED'
+  | 'AI_INDEXING_PROGRESS'
+  | 'AI_INDEXING_COMPLETE';
 
 export type EventCallback<T = any> = (payload: T) => void;
 

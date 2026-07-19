@@ -127,3 +127,38 @@ export const notifications = sqliteTable('notifications', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 });
+
+// --- AI Platform: Task Embeddings ---
+export const taskEmbeddings = sqliteTable('task_embeddings', {
+  taskId: text('task_id').primaryKey().references(() => tasks.id, { onDelete: 'cascade' }),
+  embedding: text('embedding').notNull(), // JSON float array string
+  contentHash: text('content_hash').notNull(),
+  model: text('model').notNull().default('text-embedding-004'),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+});
+
+// --- AI Platform: Long-Term Memories ---
+export const aiMemories = sqliteTable('ai_memories', {
+  id: text('id').primaryKey(),
+  content: text('content').notNull(),
+  embedding: text('embedding'), // JSON float array string (optional if generated async)
+  type: text('type').notNull(), // 'preference'|'goal'|'routine'|'constraint'|'fact'|'decision'|'project'|'relationship'
+  importance: real('importance').notNull().default(1.0),
+  accessCount: integer('access_count').notNull().default(0),
+  lastAccessedAt: integer('last_accessed_at', { mode: 'timestamp' }),
+  source: text('source'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+});
+
+// --- AI Platform: Semantic Cache ---
+export const semanticCache = sqliteTable('semantic_cache', {
+  id: text('id').primaryKey(),
+  queryHash: text('query_hash').notNull(),
+  queryEmbedding: text('query_embedding').notNull(), // JSON float array string
+  response: text('response').notNull(), // JSON AIResponse string
+  hitCount: integer('hit_count').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+});
+

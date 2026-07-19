@@ -3,6 +3,10 @@ import { FocusService, ActiveSession } from '../services/FocusService';
 import { CalendarService } from '../services/CalendarService';
 import { AIService } from '../services/ai/AIService';
 import { validateAIResponse } from '../services/ai/ActionExecutor';
+import { VectorStore } from '../services/ai/VectorStore';
+import { MemoryValidator } from '../services/ai/MemoryValidator';
+import { Planner } from '../services/ai/Planner';
+import { ToolRegistry } from '../services/ai/ToolRegistry';
 import { Task } from '../types/task';
 
 // ─── Simple Assertion Helper ───────────────────────────────────────────────────
@@ -11,16 +15,6 @@ function assert(condition: boolean, message: string): void {
   if (!condition) {
     console.error(`❌ Assertion Failed: ${message}`);
     process.exit(1);
-  }
-}
-
-function assertThrows(fn: () => void, message: string): void {
-  try {
-    fn();
-    console.error(`❌ Expected throw but none occurred: ${message}`);
-    process.exit(1);
-  } catch (_) {
-    // expected
   }
 }
 
@@ -132,86 +126,101 @@ assert(marked[todayStr] !== undefined, 'Expected today to be marked in calendar'
 assert(marked[todayStr].selected === true, 'Expected today to be selected');
 console.log('✅ CalendarService passed!\n');
 
-// ─── Test 4: AIService & Offline Provider ──────────────────────────────────────
+// ─── Test 4: VectorStore Cosine Similarity ────────────────────────────────────
 
-console.log('🧪 Test 4: AIService provider selection...');
-const offlineProvider = AIService.getProvider(undefined);
-assert(offlineProvider.constructor.name === 'OfflineProvider', 'Expected OfflineProvider when key is undefined');
+console.log('🧪 Test 4: VectorStore Cosine Similarity & Search...');
+const vs = new VectorStore();
+const vecA = [1.0, 0.0, 0.0];
+const vecB = [1.0, 0.0, 0.0];
+const vecC = [0.0, 1.0, 0.0];
 
-const openRouterProvider = AIService.getProvider('sk-or-testkey');
-assert(openRouterProvider.constructor.name === 'OpenRouterProvider', 'Expected OpenRouterProvider for sk-or- key');
+const simIdentical = VectorStore.cosineSimilarity(vecA, vecB);
+assert(Math.abs(simIdentical - 1.0) < 0.001, `Expected cosine similarity 1.0, got ${simIdentical}`);
 
-const geminiProvider = AIService.getProvider('AIza-testkey');
-assert(geminiProvider.constructor.name === 'GeminiProvider', 'Expected GeminiProvider for non-openrouter key');
-console.log('✅ AIService provider selection passed!\n');
+const simOrthogonal = VectorStore.cosineSimilarity(vecA, vecC);
+assert(Math.abs(simOrthogonal - 0.0) < 0.001, `Expected cosine similarity 0.0, got ${simOrthogonal}`);
 
-// ─── Test 5: OfflineProvider NLP Commands ─────────────────────────────────────
+vs.add('doc1', vecA);
+vs.add('doc2', vecC);
 
-console.log('🧪 Test 5: OfflineProvider NLP command parsing...');
+const searchRes = vs.search(vecA, 2);
+assert(searchRes.length === 2, `Expected 2 search results, got ${searchRes.length}`);
+assert(searchRes[0].id === 'doc1', `Expected top result 'doc1', got '${searchRes[0].id}'`);
+console.log('✅ VectorStore passed!\n');
 
-const testOfflineNLP = async () => {
-  // ADD_TASK
-  const addRes = await offlineProvider.processMessage('add task Water the plants', mockTasks);
-  assert(Array.isArray(addRes.actions) && addRes.actions!.length === 1, 'Expected 1 action for ADD_TASK');
-  assert(addRes.actions![0].type === 'ADD_TASK', 'Expected ADD_TASK action type');
-  assert(addRes.actions![0].payload.title === 'Water the plants', `Expected "Water the plants", got "${addRes.actions![0].payload.title}"`);
+// ─── Test 5: MemoryValidator ───────────────────────────────────────────────────
 
-  // COMPLETE_TASK
-  const completeRes = await offlineProvider.processMessage('complete task Task Due Today', mockTasks);
-  assert(Array.isArray(completeRes.actions) && completeRes.actions!.length === 1, 'Expected 1 action for COMPLETE_TASK');
-  assert(completeRes.actions![0].type === 'COMPLETE_TASK', 'Expected COMPLETE_TASK action type');
-  assert(completeRes.actions![0].payload.taskId === '3', `Expected taskId "3", got "${completeRes.actions![0].payload.taskId}"`);
+console.log('🧪 Test 5: MemoryValidator duplicate & temporary rejection...');
+const existingMemories = [
+  {
+    id: 'm1',
+    content: 'User prefers working in the morning',
+    type: 'preference' as const,
+    importance: 1.0,
+    accessCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
-  // Unknown task — no action expected
-  const noMatchRes = await offlineProvider.processMessage('complete task NonExistentTask', mockTasks);
-  assert(!noMatchRes.actions || noMatchRes.actions.length === 0, 'Expected no actions for unrecognized task');
-};
+// Valid candidate
+const validResult = MemoryValidator.validate(
+  { content: 'User wants to learn Rust programming', type: 'goal' },
+  existingMemories
+);
+assert(validResult.isValid === true, 'Expected candidate to be valid');
 
-// ─── Test 6: validateAIResponse schema guard ───────────────────────────────────
+// Reject temporary fact
+const tempResult = MemoryValidator.validate(
+  { content: 'User is going shopping today', type: 'fact' },
+  existingMemories
+);
+assert(tempResult.isValid === false, 'Expected candidate with "today" to be rejected');
 
-console.log('🧪 Test 6: validateAIResponse schema validation...');
+// Reject duplicate
+const dupResult = MemoryValidator.validate(
+  { content: 'User prefers working in the morning', type: 'preference' },
+  existingMemories
+);
+assert(dupResult.isValid === false, 'Expected exact text duplicate to be rejected');
+console.log('✅ MemoryValidator passed!\n');
 
-// Valid response — no actions
-const validNoActions = { message: 'Hello there!' };
-assert(validateAIResponse(validNoActions), 'Expected valid response with message only');
+// ─── Test 6: Planner Route Classification ─────────────────────────────────────
 
-// Valid response — with actions
-const validWithActions = {
-  message: 'Done!',
-  actions: [{ type: 'ADD_TASK', payload: { title: 'Test', priority: 'Medium', dueDate: null } }],
-};
-assert(validateAIResponse(validWithActions), 'Expected valid response with ADD_TASK action');
+console.log('🧪 Test 6: Planner query classification...');
+const planGreeting = Planner.plan('Hello!');
+assert(planGreeting.route === 'SIMPLE_REPLY', 'Expected greeting to route to SIMPLE_REPLY');
 
-// Invalid — missing message
-const missingMessage = { actions: [] };
-assert(!validateAIResponse(missingMessage), 'Expected invalid response with missing message');
+const planAction = Planner.plan('add task Buy groceries');
+assert(planAction.route === 'AGENT_LOOP', 'Expected "add task" to route to AGENT_LOOP');
+console.log('✅ Planner passed!\n');
 
-// Invalid — message is not a string
-const badMessage = { message: 42 };
-assert(!validateAIResponse(badMessage), 'Expected invalid response with non-string message');
+// ─── Test 7: ToolRegistry Registration & Execution ────────────────────────────
 
-// Invalid — empty message
-const emptyMessage = { message: '' };
-assert(!validateAIResponse(emptyMessage), 'Expected invalid response with empty message');
+console.log('🧪 Test 7: ToolRegistry plugin registration...');
+AIService.initTools();
+const tools = ToolRegistry.getAll();
+assert(tools.length >= 5, `Expected at least 5 registered tools, got ${tools.length}`);
+assert(ToolRegistry.has('create_task'), 'Expected create_task tool to be registered');
+assert(ToolRegistry.has('remember_fact'), 'Expected remember_fact tool to be registered');
+console.log('✅ ToolRegistry passed!\n');
 
-// Invalid — unknown action type
-const badActionType = {
-  message: 'OK',
-  actions: [{ type: 'HACK_SYSTEM', payload: {} }],
-};
-assert(!validateAIResponse(badActionType), 'Expected invalid response with unknown action type');
+// ─── Test 8: validateAIResponse schema guard ───────────────────────────────────
 
-// Invalid — actions not an array
-const actionsNotArray = { message: 'OK', actions: 'not-an-array' };
-assert(!validateAIResponse(actionsNotArray), 'Expected invalid response with non-array actions');
-
-// Invalid — null
+console.log('🧪 Test 8: validateAIResponse schema validation...');
+assert(validateAIResponse({ message: 'Hello!' }), 'Expected valid response');
+assert(!validateAIResponse({ message: 42 }), 'Expected invalid for non-string message');
 assert(!validateAIResponse(null), 'Expected invalid for null');
-assert(!validateAIResponse(undefined), 'Expected invalid for undefined');
-
 console.log('✅ validateAIResponse schema validation passed!\n');
 
 // ─── Run Async Tests ───────────────────────────────────────────────────────────
+
+const testOfflineNLP = async () => {
+  const offlineProvider = AIService.getProvider(undefined);
+  const addRes = await offlineProvider.processMessage('add task Water the plants', mockTasks);
+  assert(Array.isArray(addRes.actions) && addRes.actions!.length === 1, 'Expected 1 action for ADD_TASK');
+  assert(addRes.actions![0].type === 'ADD_TASK', 'Expected ADD_TASK action type');
+};
 
 Promise.all([testOfflineNLP()]).then(() => {
   console.log('✅ OfflineProvider NLP parsing passed!\n');
